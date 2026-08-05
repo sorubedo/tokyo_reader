@@ -40,8 +40,14 @@ web/          # Flutter Web 入口与静态资源
 
 ## 提交与 Pull Request
 
-- 仓库尚无提交历史，建议采用 Conventional Commits，例如 `feat: 支持导入 TXT 文件`、`fix: 修复阅读页滚动位置`、`test: 补充 Book 序列化测试`。
-- PR 需说明改动目的、影响范围及验证方式；关联 issue 时在描述中引用；涉及 UI 改动附截图。保持 PR 小而聚焦，便于审查。
+- 提交信息采用 Conventional Commits 格式：`<type>(<scope>): <中文描述>`，其中 `scope` 可选，用于标注改动模块（如 `reader`、`library`、`book`）。
+- 常用类型：`feat`（新功能）、`fix`（修复 bug）、`docs`（文档）、`refactor`（重构）、`test`（测试）、`chore`（构建与杂项）。描述用简体中文、以动词开头并保持简洁，例如：
+  - `feat(reader): 支持调整字号`
+  - `fix(library): 修复导入后书库不刷新`
+  - `docs: 更新贡献指南`
+  - `test(book): 补充 JSON 序列化测试`
+- 提交前依次运行 `dart format lib test`、`flutter analyze`、`flutter test` 并确保全部通过；一次提交只包含一个逻辑改动。
+- PR 需说明改动目的、影响范围及验证方式；关联 issue 时使用 `Closes #<编号>` 引用；涉及 UI 改动附截图。保持 PR 小而聚焦，便于审查。
 
 ## 面向 Agent 的说明
 
