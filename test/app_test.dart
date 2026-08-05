@@ -152,6 +152,32 @@ void main() {
     );
   });
 
+  testWidgets('重建应用后保持 Tokyo 风暴选择', (tester) async {
+    await pumpApp(tester);
+
+    await tester.tap(find.byTooltip('设置'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Tokyo 风暴'));
+    await tester.pumpAndSettle();
+
+    await tester.pumpWidget(const SizedBox());
+    await pumpApp(tester);
+
+    await tester.tap(find.byTooltip('设置'));
+    await tester.pumpAndSettle();
+
+    final group = tester.widget<RadioGroup<ThemeVariant>>(
+      find.byType(RadioGroup<ThemeVariant>),
+    );
+    expect(group.groupValue, ThemeVariant.tokyoStorm);
+    expect(
+      Theme.of(
+        tester.element(find.text('Tokyo 风暴')),
+      ).extension<TokyoPalette>()!.bg,
+      const Color(0xFF24283B),
+    );
+  });
+
   testWidgets('阅读页不显示设置入口', (tester) async {
     await Hive.box<dynamic>(
       LibraryProvider.boxName,
