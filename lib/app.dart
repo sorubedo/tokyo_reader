@@ -6,6 +6,7 @@ import 'pages/library_page.dart';
 import 'pages/reader_page.dart';
 import 'pages/settings_page.dart';
 import 'providers/library_provider.dart';
+import 'providers/global_font_provider.dart';
 import 'providers/theme_provider.dart';
 import 'services/library_storage.dart';
 
@@ -44,14 +45,27 @@ class TokyoReaderApp extends StatelessWidget {
           },
         ),
         ChangeNotifierProvider(create: (_) => ThemeProvider()..init()),
+        ChangeNotifierProvider(create: (_) => GlobalFontProvider()..init()),
       ],
-      child: Consumer<ThemeProvider>(
-        builder: (context, themeProvider, _) {
+      child: Consumer2<ThemeProvider, GlobalFontProvider>(
+        builder: (context, themeProvider, fontProvider, _) {
           return MaterialApp.router(
             title: '东京阅读',
             debugShowCheckedModeBanner: false,
-            theme: themeProvider.currentVariant.buildTheme(),
+            theme: themeProvider.currentVariant.buildTheme(
+              fontProvider: fontProvider,
+            ),
             routerConfig: _router,
+            builder: (context, child) {
+              final family = fontProvider.effectiveFamily;
+              if (family == null || family.isEmpty) {
+                return child ?? const SizedBox.shrink();
+              }
+              return DefaultTextStyle.merge(
+                style: TextStyle(fontFamily: family),
+                child: child ?? const SizedBox.shrink(),
+              );
+            },
           );
         },
       ),
