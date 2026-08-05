@@ -1,12 +1,16 @@
 # 东京阅读（Tokyo Reader）
 
-一个极简的 TXT 阅读器：用户导入书籍、在书库中管理、并在阅读页阅读。应用的外观由一套 Tokyo 风格主题变体决定，用户可以在设置页选择并持久化偏好。
+一个极简的 TXT 阅读器：用户导入书籍、在书库中管理、并在阅读页阅读。应用以 Adwaita 视觉语言组织界面，并由用户选择的 Tokyo 主题变体决定配色。
 
 ## Language
 
+**Adwaita 视觉语言（Adwaita visual language）**:
+应用唯一且稳定的布局与组件语言，保留可明确辨认的 Adwaita 核心规则，但不逐像素复刻 GNOME 桌面应用；主题变体只改变配色，不改变它。
+_Avoid_: Adwaita 主题、类 Adwaita 风格、设计风格
+
 **主题（Theme）**:
-应用的视觉外观，由当前选定的主题变体决定，并作用于整个应用。
-_Avoid_: 皮肤、配色方案
+应用的配色外观，由当前选定的主题变体决定，并作用于整个应用。
+_Avoid_: 皮肤、视觉语言
 
 **主题变体（Theme variant）**:
 Tokyo 系列中一套完整、有固定名称的配色。当前共有三种：Tokyo Night、Tokyo Day、Tokyo Storm。
