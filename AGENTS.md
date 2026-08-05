@@ -52,3 +52,17 @@ web/          # Flutter Web 入口与静态资源
 ## 面向 Agent 的说明
 
 本文件同样适用于 AI 代理：改动前先阅读相关源码，遵循上述命令、风格与测试要求，完成改动后运行 `flutter analyze` 和 `flutter test` 验证。
+
+## Agent skills
+
+### Issue tracker
+
+Issue 与 PRD 存于 GitHub Issues，使用 `gh` CLI 操作。详见 `docs/agents/issue-tracker.md`。
+
+### Triage labels
+
+使用五个标准 triage 标签：`needs-triage`、`needs-info`、`ready-for-agent`、`ready-for-human`、`wontfix`。详见 `docs/agents/triage-labels.md`。
+
+### Domain docs
+
+单上下文（single-context）：根目录 `CONTEXT.md` + `docs/adr/`。详见 `docs/agents/domain.md`。
