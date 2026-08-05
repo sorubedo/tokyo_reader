@@ -38,11 +38,28 @@ void main() {
     expect(find.text('Tokyo 日'), findsOneWidget);
     expect(find.text('Tokyo 风暴'), findsOneWidget);
     expect(find.text('默认深色主题'), findsOneWidget);
+    expect(find.text('字体'), findsOneWidget);
+    expect(find.text('全局字体'), findsOneWidget);
+    expect(find.text('系统默认'), findsOneWidget);
 
     final group = tester.widget<RadioGroup<ThemeVariant>>(
       find.byType(RadioGroup<ThemeVariant>),
     );
     expect(group.groupValue, ThemeVariant.tokyoNight);
+  });
+
+  testWidgets('Linux 字体入口只展示系统默认和系统字体', (tester) async {
+    await pumpApp(tester);
+
+    await tester.tap(find.byTooltip('设置'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('全局字体'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('系统默认'), findsNWidgets(2));
+    expect(find.text('系统字体'), findsOneWidget);
+    expect(find.text('从本地导入'), findsNothing);
+    expect(find.text('Google Fonts'), findsNothing);
   });
 
   testWidgets('选择 Tokyo 日立即切换为浅色主题', (tester) async {
