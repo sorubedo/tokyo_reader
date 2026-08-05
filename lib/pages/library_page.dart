@@ -6,6 +6,8 @@ import '../core/tokyo_palette.dart';
 import '../models/book_metadata.dart';
 import '../providers/library_provider.dart';
 import '../services/file_import_service.dart';
+import '../services/io_library_storage.dart';
+import '../services/library_directory_service.dart';
 
 class LibraryPage extends StatelessWidget {
   const LibraryPage({super.key});
@@ -39,6 +41,9 @@ class LibraryPage extends StatelessWidget {
           if (!library.isLoaded) {
             return const Center(child: CircularProgressIndicator());
           }
+          if (!library.hasStorage) {
+            return _ChooseDirectory(onSelect: () => _selectDirectory(context));
+          }
           if (library.books.isEmpty) {
             return const _EmptyLibrary();
           }
@@ -64,6 +69,49 @@ class LibraryPage extends StatelessWidget {
     } catch (error) {
       messenger.showSnackBar(SnackBar(content: Text('导入失败：$error')));
     }
+  }
+
+  Future<void> _selectDirectory(BuildContext context) async {
+    final library = context.read<LibraryProvider>();
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final path = await const LibraryDirectoryService().pickDirectoryPath();
+      if (path == null) return;
+
+      await library.setStorage(IoLibraryStorage(rootPath: path));
+      await const LibraryDirectoryService().savePath(path);
+
+      messenger.showSnackBar(SnackBar(content: Text('书库目录：$path')));
+    } catch (error) {
+      messenger.showSnackBar(SnackBar(content: Text('选择目录失败：$error')));
+    }
+  }
+}
+
+class _ChooseDirectory extends StatelessWidget {
+  const _ChooseDirectory({required this.onSelect});
+
+  final VoidCallback onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = Theme.of(context).extension<TokyoPalette>()!;
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.folder_open_outlined, size: 64, color: palette.comment),
+          const SizedBox(height: 16),
+          Text('还没有选择书库目录', style: TextStyle(fontSize: 16, color: palette.fg)),
+          const SizedBox(height: 16),
+          FilledButton.icon(
+            onPressed: onSelect,
+            icon: const Icon(Icons.create_new_folder_outlined, size: 18),
+            label: const Text('选择书库目录'),
+          ),
+        ],
+      ),
+    );
   }
 }
 

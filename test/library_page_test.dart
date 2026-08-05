@@ -21,7 +21,7 @@ Widget _wrap(LibraryProvider provider) {
 void main() {
   testWidgets('空书库显示提示和导入按钮', (tester) async {
     final provider = LibraryProvider(storage: MemoryLibraryStorage());
-    await provider.init();
+    await tester.runAsync(() => provider.init());
 
     await tester.pumpWidget(_wrap(provider));
 
@@ -30,18 +30,29 @@ void main() {
     expect(find.text('书库还是空的'), findsOneWidget);
   });
 
+  testWidgets('未选择目录时显示选择书库目录', (tester) async {
+    final provider = LibraryProvider();
+    await tester.runAsync(() => provider.init());
+
+    await tester.pumpWidget(_wrap(provider));
+
+    expect(find.text('选择书库目录'), findsOneWidget);
+  });
+
   testWidgets('书库列出已导入书籍', (tester) async {
     final storage = MemoryLibraryStorage();
-    await storage.writeBook(
-      BookMetadata(
-        id: 'book-1',
-        title: '示例小说',
-        importedAt: DateTime(2026, 8, 5),
-      ),
-      BookContent(text: '很久很久以前……'),
-    );
     final provider = LibraryProvider(storage: storage);
-    await provider.init();
+    await tester.runAsync(() async {
+      await storage.writeBook(
+        BookMetadata(
+          id: 'book-1',
+          title: '示例小说',
+          importedAt: DateTime(2026, 8, 5),
+        ),
+        BookContent(text: '很久很久以前……'),
+      );
+      await provider.init();
+    });
 
     await tester.pumpWidget(_wrap(provider));
 

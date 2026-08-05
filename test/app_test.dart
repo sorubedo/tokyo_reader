@@ -183,17 +183,22 @@ void main() {
 
   testWidgets('阅读页不显示设置入口', (tester) async {
     final storage = MemoryLibraryStorage();
-    await storage.writeBook(
-      BookMetadata(
-        id: 'book-1',
-        title: '测试之书',
-        importedAt: DateTime(2026, 8, 5),
-      ),
-      BookContent(text: '很久很久以前……'),
-    );
+    await tester.runAsync(() async {
+      await storage.writeBook(
+        BookMetadata(
+          id: 'book-1',
+          title: '测试之书',
+          importedAt: DateTime(2026, 8, 5),
+        ),
+        BookContent(text: '很久很久以前……'),
+      );
+    });
 
     await pumpApp(tester, libraryStorage: storage);
     await tester.tap(find.text('测试之书'));
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 50)),
+    );
     await tester.pumpAndSettle();
 
     expect(find.byTooltip('设置'), findsNothing);

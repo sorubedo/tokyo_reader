@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:tokyo_reader/models/book_content.dart';
 import 'package:tokyo_reader/models/book_metadata.dart';
 import 'package:tokyo_reader/providers/library_provider.dart';
 import 'package:tokyo_reader/services/memory_library_storage.dart';
@@ -73,6 +74,37 @@ void main() {
       await provider.init();
 
       expect(provider.books.map((book) => book.id).toList(), ['new', 'old']);
+    });
+
+    test('未配置存储时书库为空且不崩溃', () async {
+      final emptyProvider = LibraryProvider();
+
+      await emptyProvider.init();
+
+      expect(emptyProvider.isLoaded, isTrue);
+      expect(emptyProvider.books, isEmpty);
+      expect(await emptyProvider.readBookContent('missing'), isNull);
+    });
+
+    test('setStorage 后从新存储恢复书籍', () async {
+      final emptyProvider = LibraryProvider();
+      await emptyProvider.init();
+      expect(emptyProvider.books, isEmpty);
+
+      final newStorage = MemoryLibraryStorage();
+      await newStorage.writeBook(
+        BookMetadata(
+          id: 'book-1',
+          title: '新目录之书',
+          importedAt: DateTime(2026, 8, 5),
+        ),
+        BookContent(text: '正文'),
+      );
+
+      await emptyProvider.setStorage(newStorage);
+
+      expect(emptyProvider.books.single.title, '新目录之书');
+      expect((await emptyProvider.readBookContent('book-1'))?.text, '正文');
     });
   });
 }

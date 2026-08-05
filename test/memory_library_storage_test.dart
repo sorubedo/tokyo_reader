@@ -59,7 +59,8 @@ void main() {
 
       expect(await storage.readMetadataIndex(), isEmpty);
       expect(await storage.readBookContent('book-1'), isNull);
-      expect(storage.debugFiles.containsKey('book-1.txt'), isFalse);
+      final files = await storage.debugFiles();
+      expect(files.containsKey('book-1.txt'), isFalse);
     });
 
     test('未导入的书籍内容读取返回 null', () async {
@@ -82,16 +83,16 @@ void main() {
         BookContent(text: '只属于书籍文件的正文'),
       );
 
-      expect(storage.debugFiles['book-1.txt'], '只属于书籍文件的正文');
-      expect(storage.debugFiles['library.json'], isNot(contains('只属于书籍文件的正文')));
+      final files = await storage.debugFiles();
+      expect(files['book-1.txt'], '只属于书籍文件的正文');
+      expect(files['library.json'], isNot(contains('只属于书籍文件的正文')));
     });
 
     test('元数据索引包含当前 schema 版本', () async {
       await storage.writeMetadataIndex([]);
 
-      final index =
-          jsonDecode(storage.debugFiles['library.json']!)
-              as Map<String, dynamic>;
+      final files = await storage.debugFiles();
+      final index = jsonDecode(files['library.json']!) as Map<String, dynamic>;
       expect(index['schemaVersion'], LibraryStorage.schemaVersion);
       expect(index['books'], isEmpty);
     });

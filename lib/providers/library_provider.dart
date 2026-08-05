@@ -6,12 +6,13 @@ import '../services/library_storage.dart';
 
 /// 书库状态：基于 [LibraryStorage] 读写书籍元数据，正文按需读取。
 class LibraryProvider extends ChangeNotifier {
-  LibraryProvider({required this.storage});
+  LibraryProvider({this.storage});
 
-  final LibraryStorage storage;
+  LibraryStorage? storage;
   final List<BookMetadata> _books = [];
   bool _loaded = false;
 
+  bool get hasStorage => storage != null;
   List<BookMetadata> get books => List.unmodifiable(_books);
   bool get isLoaded => _loaded;
 
@@ -19,6 +20,18 @@ class LibraryProvider extends ChangeNotifier {
     if (_loaded) return;
     await _reload();
     _loaded = true;
+    notifyListeners();
+  }
+
+  Future<void> setStorage(LibraryStorage storage) async {
+    this.storage = storage;
+    await _reload();
+    _loaded = true;
+    notifyListeners();
+  }
+
+  Future<void> refresh() async {
+    await _reload();
     notifyListeners();
   }
 
@@ -30,11 +43,16 @@ class LibraryProvider extends ChangeNotifier {
   }
 
   /// 按需读取书籍正文，Provider 不缓存整库正文。
-  Future<BookContent?> readBookContent(String bookId) {
+  Future<BookContent?> readBookContent(String bookId) async {
+    final storage = this.storage;
+    if (storage == null) return null;
     return storage.readBookContent(bookId);
   }
 
   Future<void> addBook({required String title, required String content}) async {
+    final storage = this.storage;
+    if (storage == null) throw StateError('尚未选择书库目录');
+
     final now = DateTime.now();
     final metadata = BookMetadata(
       id: now.microsecondsSinceEpoch.toString(),
@@ -47,6 +65,9 @@ class LibraryProvider extends ChangeNotifier {
   }
 
   Future<void> deleteBook(String id) async {
+    final storage = this.storage;
+    if (storage == null) throw StateError('尚未选择书库目录');
+
     final before = _books.length;
     await storage.deleteBook(id);
     await _reload();
@@ -55,7 +76,9 @@ class LibraryProvider extends ChangeNotifier {
   }
 
   Future<void> _reload() async {
-    final loaded = await storage.readMetadataIndex();
+    final storage = this.storage;
+    if (storage == null) return;
+    final loaded = await storage.scan();
     loaded.sort((a, b) => b.importedAt.compareTo(a.importedAt));
     _books
       ..clear()

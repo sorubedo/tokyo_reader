@@ -29,4 +29,8 @@ abstract class LibraryStorage {
 
   /// 整体写入元数据索引。
   Future<void> writeMetadataIndex(List<BookMetadata> books);
+
+  /// 扫描书库目录：发现未登记书籍文件、检测外部修改与缺失，
+  /// 更新元数据索引并返回最新元数据列表。
+  Future<List<BookMetadata>> scan();
 }

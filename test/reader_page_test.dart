@@ -21,18 +21,23 @@ Widget _wrap(LibraryProvider provider) {
 void main() {
   testWidgets('阅读页显示书名、正文和进度', (tester) async {
     final storage = MemoryLibraryStorage();
-    await storage.writeBook(
-      BookMetadata(
-        id: 'book-1',
-        title: '测试之书',
-        importedAt: DateTime(2026, 8, 5),
-      ),
-      BookContent(text: '第一段文字\n第二段文字'),
-    );
     final provider = LibraryProvider(storage: storage);
-    await provider.init();
+    await tester.runAsync(() async {
+      await storage.writeBook(
+        BookMetadata(
+          id: 'book-1',
+          title: '测试之书',
+          importedAt: DateTime(2026, 8, 5),
+        ),
+        BookContent(text: '第一段文字\n第二段文字'),
+      );
+      await provider.init();
+    });
 
     await tester.pumpWidget(_wrap(provider));
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 50)),
+    );
     await tester.pumpAndSettle();
 
     expect(find.text('测试之书'), findsOneWidget);
