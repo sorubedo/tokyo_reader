@@ -44,4 +44,28 @@ void main() {
     expect(find.textContaining('第一段文字'), findsOneWidget);
     expect(find.text('0%'), findsOneWidget);
   });
+
+  testWidgets('文件缺失时阅读页显示读取失败而不崩溃', (tester) async {
+    final storage = MemoryLibraryStorage();
+    final provider = LibraryProvider(storage: storage);
+    await tester.runAsync(() async {
+      await storage.writeMetadataIndex([
+        BookMetadata(
+          id: 'book-1',
+          title: '测试之书',
+          importedAt: DateTime(2026, 8, 5),
+        ),
+      ]);
+      await provider.init();
+    });
+
+    await tester.pumpWidget(_wrap(provider));
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 50)),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('测试之书'), findsOneWidget);
+    expect(find.text('书籍内容读取失败'), findsOneWidget);
+  });
 }

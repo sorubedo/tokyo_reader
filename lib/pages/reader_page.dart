@@ -18,7 +18,7 @@ class _ReaderPageState extends State<ReaderPage> {
   final ScrollController _scrollController = ScrollController();
   double _progress = 0;
   BookContent? _content;
-  bool _contentRequested = false;
+  bool _contentLoading = true;
 
   @override
   void initState() {
@@ -28,13 +28,14 @@ class _ReaderPageState extends State<ReaderPage> {
   }
 
   Future<void> _loadContent() async {
-    if (_contentRequested) return;
-    _contentRequested = true;
     final content = await context.read<LibraryProvider>().readBookContent(
       widget.bookId,
     );
     if (!mounted) return;
-    setState(() => _content = content);
+    setState(() {
+      _content = content;
+      _contentLoading = false;
+    });
   }
 
   @override
@@ -85,9 +86,14 @@ class _ReaderPageState extends State<ReaderPage> {
   }
 
   Widget _buildBody(TokyoPalette palette) {
+    if (_contentLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
     final content = _content;
     if (content == null) {
-      return const Center(child: CircularProgressIndicator());
+      return Center(
+        child: Text('书籍内容读取失败', style: TextStyle(color: palette.fgDark)),
+      );
     }
     return Scrollbar(
       controller: _scrollController,

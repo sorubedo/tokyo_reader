@@ -64,4 +64,22 @@ void main() {
     expect(await storage.readBookContent('book-1'), isNull);
     expect(await File('${tempDir.path}/book-1.txt').exists(), isFalse);
   });
+
+  test('真实文件夹外部修改被标记且读到最新正文', () async {
+    final storage = IoLibraryStorage(rootPath: tempDir.path);
+    await storage.writeBook(
+      BookMetadata(
+        id: 'book-1',
+        title: '示例小说',
+        importedAt: DateTime(2026, 8, 5),
+      ),
+      BookContent(text: '旧正文'),
+    );
+
+    await File('${tempDir.path}/book-1.txt').writeAsString('外部改写的正文');
+
+    final books = await storage.scan();
+    expect(books.single.externalModified, isTrue);
+    expect((await storage.readBookContent('book-1'))?.text, '外部改写的正文');
+  });
 }

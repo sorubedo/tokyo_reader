@@ -160,7 +160,10 @@ class _BookList extends StatelessWidget {
           ),
           leading: Icon(Icons.menu_book_rounded, color: palette.blue),
           title: Text(book.title, maxLines: 1, overflow: TextOverflow.ellipsis),
-          subtitle: Text(_formatDate(book.importedAt)),
+          subtitle: Text(
+            '${_formatDate(book.importedAt)}'
+            '${book.externalModified ? ' · 外部修改' : ''}',
+          ),
           trailing: IconButton(
             tooltip: '删除',
             icon: const Icon(Icons.delete_outline),
