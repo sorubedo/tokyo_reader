@@ -5,13 +5,15 @@ import 'package:provider/provider.dart';
 import '../core/tokyo_palette.dart';
 import '../models/book_metadata.dart';
 import '../providers/library_provider.dart';
-import '../services/file_import_service.dart';
 
 class LibraryPage extends StatelessWidget {
   const LibraryPage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final canImport = context.select<LibraryProvider, bool>(
+      (library) => library.hasStorage,
+    );
     return Scaffold(
       appBar: AppBar(
         title: const Text('书库'),
@@ -20,7 +22,7 @@ class LibraryPage extends StatelessWidget {
             padding: const EdgeInsets.only(right: 12),
             child: FilledButton.icon(
               key: const ValueKey('import_button'),
-              onPressed: () => _importTxt(context),
+              onPressed: canImport ? () => _importTxt(context) : null,
               icon: const Icon(Icons.upload_file, size: 18),
               label: const Text('导入 TXT'),
             ),
@@ -57,15 +59,10 @@ class LibraryPage extends StatelessWidget {
     final library = context.read<LibraryProvider>();
     final messenger = ScaffoldMessenger.of(context);
     try {
-      final result = await const FileImportService().pickTxtFile();
-      if (result == null) return;
+      final imported = await library.importTxt();
+      if (imported == null) return;
 
-      final title = result.name.toLowerCase().endsWith('.txt')
-          ? result.name.substring(0, result.name.length - 4)
-          : result.name;
-      await library.addBook(title: title, content: result.content);
-
-      messenger.showSnackBar(SnackBar(content: Text('已导入《$title》')));
+      messenger.showSnackBar(SnackBar(content: Text('已导入《${imported.title}》')));
     } catch (error) {
       messenger.showSnackBar(SnackBar(content: Text('导入失败：$error')));
     }

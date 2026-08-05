@@ -7,10 +7,15 @@ class ImportedTxtFile {
   final String content;
 }
 
-class FileImportService {
+abstract interface class TxtFilePicker {
+  Future<ImportedTxtFile?> pickTxtFile();
+}
+
+class FileImportService implements TxtFilePicker {
   const FileImportService();
 
   /// 弹出系统文件选择框，只允许选择 txt 文件。
+  @override
   Future<ImportedTxtFile?> pickTxtFile() async {
     const typeGroup = XTypeGroup(
       label: 'TXT 文本',

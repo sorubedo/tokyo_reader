@@ -40,6 +40,10 @@ void main() {
     await tester.pumpWidget(_wrap(provider));
 
     expect(find.text('选择书库目录'), findsOneWidget);
+    final importButton = tester.widget<FilledButton>(
+      find.byKey(const ValueKey('import_button')),
+    );
+    expect(importButton.onPressed, isNull);
   });
 
   testWidgets('书库列出已导入书籍', (tester) async {

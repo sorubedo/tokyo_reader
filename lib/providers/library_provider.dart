@@ -2,15 +2,21 @@ import 'package:flutter/foundation.dart';
 
 import '../models/book_content.dart';
 import '../models/book_metadata.dart';
+import '../services/file_import_service.dart';
 import '../services/library_directory_adapter.dart';
 import '../services/library_storage.dart';
 
 /// 书库状态：基于 [LibraryStorage] 读写书籍元数据，正文按需读取。
 class LibraryProvider extends ChangeNotifier {
-  LibraryProvider({this.storage, this.directoryAdapter});
+  LibraryProvider({
+    this.storage,
+    this.directoryAdapter,
+    this.filePicker = const FileImportService(),
+  });
 
   LibraryStorage? storage;
   final LibraryDirectoryAdapter? directoryAdapter;
+  final TxtFilePicker filePicker;
   final List<BookMetadata> _books = [];
   bool _loaded = false;
 
@@ -66,19 +72,24 @@ class LibraryProvider extends ChangeNotifier {
     return storage.readBookContent(bookId);
   }
 
-  Future<void> addBook({required String title, required String content}) async {
+  /// 选择 TXT 文件并完成元数据创建、持久化与书库刷新。
+  Future<BookMetadata?> importTxt() async {
     final storage = this.storage;
     if (storage == null) throw StateError('尚未选择书库目录');
+
+    final importedFile = await filePicker.pickTxtFile();
+    if (importedFile == null) return null;
 
     final now = DateTime.now();
     final metadata = BookMetadata(
       id: now.microsecondsSinceEpoch.toString(),
-      title: title,
+      title: _titleFromFileName(importedFile.name),
       importedAt: now,
     );
-    await storage.writeBook(metadata, BookContent(text: content));
+    await storage.writeBook(metadata, BookContent(text: importedFile.content));
     await _reload();
     notifyListeners();
+    return bookById(metadata.id);
   }
 
   Future<void> deleteBook(String id) async {
@@ -113,5 +124,10 @@ class LibraryProvider extends ChangeNotifier {
     _books
       ..clear()
       ..addAll(loaded);
+  }
+
+  String _titleFromFileName(String fileName) {
+    if (!fileName.toLowerCase().endsWith('.txt')) return fileName;
+    return fileName.substring(0, fileName.length - 4);
   }
 }

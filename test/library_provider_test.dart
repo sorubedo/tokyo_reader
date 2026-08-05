@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:tokyo_reader/models/book_content.dart';
 import 'package:tokyo_reader/models/book_metadata.dart';
 import 'package:tokyo_reader/providers/library_provider.dart';
+import 'package:tokyo_reader/services/file_import_service.dart';
 import 'package:tokyo_reader/services/library_directory_adapter.dart';
 import 'package:tokyo_reader/services/memory_library_storage.dart';
 
@@ -38,18 +39,59 @@ class _FakeLibraryDirectoryAdapter implements LibraryDirectoryAdapter {
   }
 }
 
+class _FakeTxtFilePicker implements TxtFilePicker {
+  _FakeTxtFilePicker([this.result]);
+
+  ImportedTxtFile? result;
+  int calls = 0;
+
+  @override
+  Future<ImportedTxtFile?> pickTxtFile() async {
+    calls++;
+    return result;
+  }
+}
+
 void main() {
   group('LibraryProvider', () {
     late MemoryLibraryStorage storage;
+    late _FakeTxtFilePicker picker;
     late LibraryProvider provider;
 
     setUp(() {
       storage = MemoryLibraryStorage();
-      provider = LibraryProvider(storage: storage);
+      picker = _FakeTxtFilePicker();
+      provider = LibraryProvider(storage: storage, filePicker: picker);
+    });
+
+    test('未选择目录时导入不会调用文件选择器', () async {
+      final emptyPicker = _FakeTxtFilePicker(
+        const ImportedTxtFile(name: '示例小说.txt', content: '正文'),
+      );
+      final emptyProvider = LibraryProvider(filePicker: emptyPicker);
+
+      await expectLater(emptyProvider.importTxt(), throwsStateError);
+
+      expect(emptyPicker.calls, 0);
+      expect(emptyProvider.books, isEmpty);
+    });
+
+    test('取消文件选择时不写入书库', () async {
+      final imported = await provider.importTxt();
+
+      expect(imported, isNull);
+      expect(picker.calls, 1);
+      expect(provider.books, isEmpty);
+      expect(await storage.scan(), isEmpty);
     });
 
     test('导入书籍后写入书籍文件并登记元数据索引', () async {
-      await provider.addBook(title: '示例小说', content: '很久很久以前……');
+      picker.result = const ImportedTxtFile(
+        name: '示例小说.TXT',
+        content: '很久很久以前……',
+      );
+
+      final imported = await provider.importTxt();
 
       final books = await storage.readMetadataIndex();
       expect(books, hasLength(1));
@@ -57,12 +99,15 @@ void main() {
 
       final content = await storage.readBookContent(books.single.id);
       expect(content?.text, '很久很久以前……');
+      expect(imported?.id, books.single.id);
       expect(provider.books.single.title, '示例小说');
     });
 
     test('同名书籍可以同时存在', () async {
-      await provider.addBook(title: '同名书', content: '一');
-      await provider.addBook(title: '同名书', content: '二');
+      picker.result = const ImportedTxtFile(name: '同名书.txt', content: '一');
+      await provider.importTxt();
+      picker.result = const ImportedTxtFile(name: '同名书.txt', content: '二');
+      await provider.importTxt();
 
       final books = await storage.readMetadataIndex();
       expect(books, hasLength(2));
@@ -72,7 +117,8 @@ void main() {
     });
 
     test('删除书籍后文件与索引同步移除', () async {
-      await provider.addBook(title: '示例小说', content: '正文');
+      picker.result = const ImportedTxtFile(name: '示例小说.txt', content: '正文');
+      await provider.importTxt();
       final bookId = provider.books.single.id;
 
       await provider.deleteBook(bookId);
@@ -83,7 +129,11 @@ void main() {
     });
 
     test('阅读内容按需读取，Provider 不持有正文', () async {
-      await provider.addBook(title: '示例小说', content: '按需读取的正文');
+      picker.result = const ImportedTxtFile(
+        name: '示例小说.txt',
+        content: '按需读取的正文',
+      );
+      await provider.importTxt();
 
       final book = provider.books.single;
       expect(book, isA<BookMetadata>());
