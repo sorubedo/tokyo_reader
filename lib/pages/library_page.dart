@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import '../core/tokyo_night.dart';
+import '../core/tokyo_palette.dart';
 import '../models/book.dart';
 import '../providers/library_provider.dart';
 import '../services/file_import_service.dart';
@@ -22,6 +22,14 @@ class LibraryPage extends StatelessWidget {
               onPressed: () => _importTxt(context),
               icon: const Icon(Icons.upload_file, size: 18),
               label: const Text('导入 TXT'),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: IconButton(
+              tooltip: '设置',
+              icon: const Icon(Icons.settings_outlined),
+              onPressed: () => context.push('/settings'),
             ),
           ),
         ],
@@ -64,18 +72,18 @@ class _EmptyLibrary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tn = Theme.of(context).extension<TokyoNight>()!;
+    final palette = Theme.of(context).extension<TokyoPalette>()!;
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.library_books_outlined, size: 64, color: tn.comment),
+          Icon(Icons.library_books_outlined, size: 64, color: palette.comment),
           const SizedBox(height: 16),
-          Text('书库还是空的', style: TextStyle(fontSize: 16, color: tn.fg)),
+          Text('书库还是空的', style: TextStyle(fontSize: 16, color: palette.fg)),
           const SizedBox(height: 8),
           Text(
             '点击右上角「导入 TXT」添加第一本书',
-            style: TextStyle(fontSize: 13, color: tn.fgDark),
+            style: TextStyle(fontSize: 13, color: palette.fgDark),
           ),
         ],
       ),
@@ -90,7 +98,7 @@ class _BookList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tn = Theme.of(context).extension<TokyoNight>()!;
+    final palette = Theme.of(context).extension<TokyoPalette>()!;
     return ListView.separated(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       itemCount: books.length,
@@ -102,7 +110,7 @@ class _BookList extends StatelessWidget {
             horizontal: 12,
             vertical: 4,
           ),
-          leading: Icon(Icons.menu_book_rounded, color: tn.blue),
+          leading: Icon(Icons.menu_book_rounded, color: palette.blue),
           title: Text(book.title, maxLines: 1, overflow: TextOverflow.ellipsis),
           subtitle: Text(
             '${book.characterCount} 字 · ${_formatDate(book.importedAt)}',
@@ -119,7 +127,7 @@ class _BookList extends StatelessWidget {
   }
 
   Future<void> _confirmDelete(BuildContext context, Book book) async {
-    final tn = Theme.of(context).extension<TokyoNight>()!;
+    final palette = Theme.of(context).extension<TokyoPalette>()!;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
@@ -133,7 +141,7 @@ class _BookList extends StatelessWidget {
             ),
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: Text('删除', style: TextStyle(color: tn.red)),
+              child: Text('删除', style: TextStyle(color: palette.red)),
             ),
           ],
         );

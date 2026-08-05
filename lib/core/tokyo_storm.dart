@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 
 import 'tokyo_palette.dart';
 
-/// Tokyo Night（暗色）调色板变体。
+/// Tokyo Storm（深蓝灰调）调色板变体。
 @immutable
-class TokyoNight extends TokyoPalette {
-  const TokyoNight()
+class TokyoStorm extends TokyoPalette {
+  const TokyoStorm()
     : super(
-        bg: const Color(0xFF1A1B26),
-        bgDark: const Color(0xFF16161E),
+        bg: const Color(0xFF24283B),
+        bgDark: const Color(0xFF1F2335),
         bgHighlight: const Color(0xFF292E42),
         fg: const Color(0xFFC0CAF5),
         fgDark: const Color(0xFFA9B1D6),
@@ -23,5 +23,5 @@ class TokyoNight extends TokyoPalette {
         red: const Color(0xFFF7768E),
       );
 
-  static const TokyoNight tokyoNight = TokyoNight();
+  static const TokyoStorm tokyoStorm = TokyoStorm();
 }

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../core/tokyo_night.dart';
+import '../core/tokyo_palette.dart';
 import '../providers/library_provider.dart';
 
 class ReaderPage extends StatefulWidget {
@@ -41,14 +41,14 @@ class _ReaderPageState extends State<ReaderPage> {
 
   @override
   Widget build(BuildContext context) {
-    final tn = Theme.of(context).extension<TokyoNight>()!;
+    final palette = Theme.of(context).extension<TokyoPalette>()!;
     final book = context.watch<LibraryProvider>().bookById(widget.bookId);
 
     if (book == null) {
       return Scaffold(
         appBar: AppBar(title: const Text('阅读')),
         body: Center(
-          child: Text('书籍不存在或已删除', style: TextStyle(color: tn.fgDark)),
+          child: Text('书籍不存在或已删除', style: TextStyle(color: palette.fgDark)),
         ),
       );
     }
@@ -74,7 +74,11 @@ class _ReaderPageState extends State<ReaderPage> {
                     constraints: const BoxConstraints(maxWidth: 760),
                     child: SelectableText(
                       book.content,
-                      style: TextStyle(fontSize: 17, height: 1.9, color: tn.fg),
+                      style: TextStyle(
+                        fontSize: 17,
+                        height: 1.9,
+                        color: palette.fg,
+                      ),
                     ),
                   ),
                 ),
@@ -95,10 +99,10 @@ class _ReaderProgress extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tn = Theme.of(context).extension<TokyoNight>()!;
+    final palette = Theme.of(context).extension<TokyoPalette>()!;
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
-      color: tn.bgDark,
+      color: palette.bgDark,
       child: Row(
         children: [
           Expanded(
@@ -107,8 +111,8 @@ class _ReaderProgress extends StatelessWidget {
               child: LinearProgressIndicator(
                 value: progress,
                 minHeight: 4,
-                backgroundColor: tn.bgHighlight,
-                color: tn.blue,
+                backgroundColor: palette.bgHighlight,
+                color: palette.blue,
               ),
             ),
           ),
@@ -118,7 +122,7 @@ class _ReaderProgress extends StatelessWidget {
             child: Text(
               '${(progress * 100).round()}%',
               textAlign: TextAlign.right,
-              style: TextStyle(fontSize: 13, color: tn.fgDark),
+              style: TextStyle(fontSize: 13, color: palette.fgDark),
             ),
           ),
         ],

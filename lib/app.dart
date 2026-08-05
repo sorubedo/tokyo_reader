@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import 'core/tokyo_night.dart';
 import 'pages/library_page.dart';
 import 'pages/reader_page.dart';
+import 'pages/settings_page.dart';
 import 'providers/library_provider.dart';
+import 'providers/theme_provider.dart';
 
 final GoRouter _router = GoRouter(
   initialLocation: '/',
@@ -16,6 +17,10 @@ final GoRouter _router = GoRouter(
       builder: (context, state) =>
           ReaderPage(bookId: state.pathParameters['id']!),
     ),
+    GoRoute(
+      path: '/settings',
+      builder: (context, state) => const SettingsPage(),
+    ),
   ],
 );
 
@@ -24,15 +29,20 @@ class TokyoReaderApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => LibraryProvider()..init(),
-      child: MaterialApp.router(
-        title: '东京阅读',
-        debugShowCheckedModeBanner: false,
-        theme: buildTokyoNightTheme(),
-        darkTheme: buildTokyoNightTheme(),
-        themeMode: ThemeMode.dark,
-        routerConfig: _router,
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => LibraryProvider()..init()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()..init()),
+      ],
+      child: Consumer<ThemeProvider>(
+        builder: (context, themeProvider, _) {
+          return MaterialApp.router(
+            title: '东京阅读',
+            debugShowCheckedModeBanner: false,
+            theme: themeProvider.currentVariant.buildTheme(),
+            routerConfig: _router,
+          );
+        },
       ),
     );
   }

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
-import 'package:tokyo_reader/core/tokyo_night.dart';
+import 'package:tokyo_reader/core/tokyo_theme.dart';
 import 'package:tokyo_reader/models/book.dart';
 import 'package:tokyo_reader/pages/reader_page.dart';
 import 'package:tokyo_reader/providers/library_provider.dart';
