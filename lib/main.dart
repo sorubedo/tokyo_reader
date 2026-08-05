@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 
 import 'app.dart';
-import 'services/storage_factory.dart';
+import 'providers/library_provider_factory.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final libraryStorage = await createDefaultLibraryStorage();
-  runApp(TokyoReaderApp(libraryStorage: libraryStorage));
+  final libraryProvider = createDefaultLibraryProvider();
+  await libraryProvider.init();
+  runApp(TokyoReaderApp(libraryProvider: libraryProvider));
 }

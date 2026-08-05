@@ -6,8 +6,6 @@ import '../core/tokyo_palette.dart';
 import '../models/book_metadata.dart';
 import '../providers/library_provider.dart';
 import '../services/file_import_service.dart';
-import '../services/io_library_storage.dart';
-import '../services/library_directory_service.dart';
 
 class LibraryPage extends StatelessWidget {
   const LibraryPage({super.key});
@@ -77,11 +75,8 @@ class LibraryPage extends StatelessWidget {
     final library = context.read<LibraryProvider>();
     final messenger = ScaffoldMessenger.of(context);
     try {
-      final path = await const LibraryDirectoryService().pickDirectoryPath();
+      final path = await library.selectDirectory();
       if (path == null) return;
-
-      await library.setStorage(IoLibraryStorage(rootPath: path));
-      await const LibraryDirectoryService().savePath(path);
 
       messenger.showSnackBar(SnackBar(content: Text('书库目录：$path')));
     } catch (error) {

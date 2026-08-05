@@ -26,16 +26,22 @@ final GoRouter _router = GoRouter(
 );
 
 class TokyoReaderApp extends StatelessWidget {
-  const TokyoReaderApp({super.key, this.libraryStorage});
+  const TokyoReaderApp({super.key, this.libraryStorage, this.libraryProvider})
+    : assert(libraryStorage == null || libraryProvider == null);
 
   final LibraryStorage? libraryStorage;
+  final LibraryProvider? libraryProvider;
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(
-          create: (_) => LibraryProvider(storage: libraryStorage)..init(),
+          create: (_) {
+            final provider = libraryProvider;
+            if (provider != null) return provider;
+            return LibraryProvider(storage: libraryStorage)..init();
+          },
         ),
         ChangeNotifierProvider(create: (_) => ThemeProvider()..init()),
       ],

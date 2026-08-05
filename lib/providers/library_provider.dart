@@ -2,13 +2,15 @@ import 'package:flutter/foundation.dart';
 
 import '../models/book_content.dart';
 import '../models/book_metadata.dart';
+import '../services/library_directory_adapter.dart';
 import '../services/library_storage.dart';
 
 /// 书库状态：基于 [LibraryStorage] 读写书籍元数据，正文按需读取。
 class LibraryProvider extends ChangeNotifier {
-  LibraryProvider({this.storage});
+  LibraryProvider({this.storage, this.directoryAdapter});
 
   LibraryStorage? storage;
+  final LibraryDirectoryAdapter? directoryAdapter;
   final List<BookMetadata> _books = [];
   bool _loaded = false;
 
@@ -18,17 +20,31 @@ class LibraryProvider extends ChangeNotifier {
 
   Future<void> init() async {
     if (_loaded) return;
-    await _reload();
+    var initialStorage = storage;
+    initialStorage ??= (await directoryAdapter?.restore())?.storage;
+    if (initialStorage != null) {
+      _commitStorage(initialStorage, await _load(initialStorage));
+    }
     _loaded = true;
     notifyListeners();
   }
 
-  Future<void> setStorage(LibraryStorage storage) async {
-    final loaded = await _load(storage);
-    this.storage = storage;
-    _replaceBooks(loaded);
+  /// 选择、验证并记住新的书库目录，取消选择时返回 null。
+  Future<String?> selectDirectory() async {
+    final directoryAdapter = this.directoryAdapter;
+    if (directoryAdapter == null) {
+      throw StateError('当前环境不支持选择书库目录');
+    }
+
+    final selection = await directoryAdapter.select();
+    if (selection == null) return null;
+
+    final loaded = await _load(selection.storage);
+    await directoryAdapter.remember(selection);
+    _commitStorage(selection.storage, loaded);
     _loaded = true;
     notifyListeners();
+    return selection.label;
   }
 
   Future<void> refresh() async {
@@ -86,6 +102,11 @@ class LibraryProvider extends ChangeNotifier {
     final loaded = await storage.scan();
     loaded.sort((a, b) => b.importedAt.compareTo(a.importedAt));
     return loaded;
+  }
+
+  void _commitStorage(LibraryStorage storage, List<BookMetadata> loaded) {
+    this.storage = storage;
+    _replaceBooks(loaded);
   }
 
   void _replaceBooks(List<BookMetadata> loaded) {
