@@ -4,6 +4,13 @@ import 'package:tokyo_reader/models/book_metadata.dart';
 import 'package:tokyo_reader/providers/library_provider.dart';
 import 'package:tokyo_reader/services/memory_library_storage.dart';
 
+class _ScanFailingStorage extends MemoryLibraryStorage {
+  @override
+  Future<List<BookMetadata>> scan() async {
+    throw StateError('目录不可读');
+  }
+}
+
 void main() {
   group('LibraryProvider', () {
     late MemoryLibraryStorage storage;
@@ -105,6 +112,27 @@ void main() {
 
       expect(emptyProvider.books.single.title, '新目录之书');
       expect((await emptyProvider.readBookContent('book-1'))?.text, '正文');
+    });
+
+    test('切换目录扫描失败时保留原书库状态', () async {
+      await storage.writeBook(
+        BookMetadata(
+          id: 'old-book',
+          title: '原目录之书',
+          importedAt: DateTime(2026, 8, 5),
+        ),
+        BookContent(text: '仍可读取的正文'),
+      );
+      await provider.init();
+
+      await expectLater(
+        provider.setStorage(_ScanFailingStorage()),
+        throwsStateError,
+      );
+
+      expect(provider.storage, same(storage));
+      expect(provider.books.single.title, '原目录之书');
+      expect((await provider.readBookContent('old-book'))?.text, '仍可读取的正文');
     });
   });
 }

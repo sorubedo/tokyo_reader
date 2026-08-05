@@ -24,8 +24,9 @@ class LibraryProvider extends ChangeNotifier {
   }
 
   Future<void> setStorage(LibraryStorage storage) async {
+    final loaded = await _load(storage);
     this.storage = storage;
-    await _reload();
+    _replaceBooks(loaded);
     _loaded = true;
     notifyListeners();
   }
@@ -78,8 +79,16 @@ class LibraryProvider extends ChangeNotifier {
   Future<void> _reload() async {
     final storage = this.storage;
     if (storage == null) return;
+    _replaceBooks(await _load(storage));
+  }
+
+  Future<List<BookMetadata>> _load(LibraryStorage storage) async {
     final loaded = await storage.scan();
     loaded.sort((a, b) => b.importedAt.compareTo(a.importedAt));
+    return loaded;
+  }
+
+  void _replaceBooks(List<BookMetadata> loaded) {
     _books
       ..clear()
       ..addAll(loaded);
