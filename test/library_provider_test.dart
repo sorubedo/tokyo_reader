@@ -93,7 +93,7 @@ void main() {
 
       final imported = await provider.importTxt();
 
-      final books = await storage.readMetadataIndex();
+      final books = await storage.scan();
       expect(books, hasLength(1));
       expect(books.single.title, '示例小说');
 
@@ -109,7 +109,7 @@ void main() {
       picker.result = const ImportedTxtFile(name: '同名书.txt', content: '二');
       await provider.importTxt();
 
-      final books = await storage.readMetadataIndex();
+      final books = await storage.scan();
       expect(books, hasLength(2));
       expect(books.map((book) => book.title).toSet(), {'同名书'});
       expect(books.map((book) => book.id).toSet(), hasLength(2));
@@ -123,7 +123,7 @@ void main() {
 
       await provider.deleteBook(bookId);
 
-      expect(await storage.readMetadataIndex(), isEmpty);
+      expect(await storage.scan(), isEmpty);
       expect(await storage.readBookContent(bookId), isNull);
       expect(provider.books, isEmpty);
     });
@@ -153,7 +153,8 @@ void main() {
         title: '新书',
         importedAt: DateTime(2026, 2, 1),
       );
-      await storage.writeMetadataIndex([older, newer]);
+      await storage.writeBook(older, BookContent(text: '旧书正文'));
+      await storage.writeBook(newer, BookContent(text: '新书正文'));
 
       await provider.init();
 

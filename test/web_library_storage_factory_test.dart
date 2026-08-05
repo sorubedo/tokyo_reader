@@ -44,7 +44,7 @@ void main() {
       opfsFileSystem: opfs,
       fallbackFileSystem: fallback,
     );
-    final books = await second!.readMetadataIndex();
+    final books = await second!.scan();
 
     expect(books.single.title, '回退之书');
     expect((await second.readBookContent('book-1'))?.text, '正文');
@@ -69,7 +69,7 @@ void main() {
       fileSystem: fileSystem,
       rootPath: 'library',
     );
-    final books = await second.readMetadataIndex();
+    final books = await second.scan();
 
     expect(books.single.title, '持久之书');
     expect((await second.readBookContent('book-1'))?.text, '很久很久以前……');

@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
 import 'package:fs_shim/fs_shim.dart';
 import 'package:path/path.dart' as p;
 
@@ -25,26 +24,26 @@ class DirectoryLibraryStorage implements LibraryStorage {
   final String rootPath;
   final ContentHasher _hasher;
 
+  static const int _schemaVersion = 1;
+  static const String _indexFileName = 'library.json';
+
   Directory get _root => fileSystem.directory(rootPath);
 
   File _bookFile(String bookId) {
-    return fileSystem.file(
-      p.join(rootPath, LibraryStorage.bookFileName(bookId)),
-    );
+    return fileSystem.file(p.join(rootPath, '$bookId.txt'));
   }
 
   File get _indexFile {
-    return fileSystem.file(p.join(rootPath, LibraryStorage.indexFileName));
+    return fileSystem.file(p.join(rootPath, _indexFileName));
   }
 
-  @override
-  Future<List<BookMetadata>> readMetadataIndex() async {
+  Future<List<BookMetadata>> _readMetadataIndex() async {
     final file = _indexFile;
     if (!await file.exists()) return [];
 
     final index = jsonDecode(await file.readAsString()) as Map<String, dynamic>;
     final version = index['schemaVersion'] as int?;
-    if (version != LibraryStorage.schemaVersion) {
+    if (version != _schemaVersion) {
       throw StateError('不支持的元数据索引版本：$version');
     }
 
@@ -103,12 +102,11 @@ class DirectoryLibraryStorage implements LibraryStorage {
     });
   }
 
-  @override
-  Future<void> writeMetadataIndex(List<BookMetadata> books) async {
+  Future<void> _writeMetadataIndex(List<BookMetadata> books) async {
     await _ensureRoot();
     await _indexFile.writeAsString(
       jsonEncode({
-        'schemaVersion': LibraryStorage.schemaVersion,
+        'schemaVersion': _schemaVersion,
         'books': [for (final book in books) book.toJson()],
       }),
     );
@@ -117,7 +115,7 @@ class DirectoryLibraryStorage implements LibraryStorage {
   @override
   Future<List<BookMetadata>> scan() async {
     await _ensureRoot();
-    final byId = {for (final book in await readMetadataIndex()) book.id: book};
+    final byId = {for (final book in await _readMetadataIndex()) book.id: book};
 
     final bookFiles = <File>[];
     await for (final entity in _root.list()) {
@@ -186,7 +184,7 @@ class DirectoryLibraryStorage implements LibraryStorage {
     }
 
     final updated = byId.values.toList();
-    await writeMetadataIndex(updated);
+    await _writeMetadataIndex(updated);
     return updated;
   }
 
@@ -197,19 +195,8 @@ class DirectoryLibraryStorage implements LibraryStorage {
   Future<void> _updateMetadataIndex(
     void Function(List<BookMetadata> books) update,
   ) async {
-    final books = [...await readMetadataIndex()];
+    final books = [...await _readMetadataIndex()];
     update(books);
-    await writeMetadataIndex(books);
-  }
-
-  @visibleForTesting
-  Future<Map<String, String>> debugFiles() async {
-    final result = <String, String>{};
-    await for (final entity in _root.list()) {
-      if (entity is File) {
-        result[p.basename(entity.path)] = await entity.readAsString();
-      }
-    }
-    return result;
+    await _writeMetadataIndex(books);
   }
 }

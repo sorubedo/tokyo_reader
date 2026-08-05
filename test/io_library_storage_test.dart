@@ -30,7 +30,7 @@ void main() {
     );
 
     final restored = IoLibraryStorage(rootPath: tempDir.path);
-    final books = await restored.readMetadataIndex();
+    final books = await restored.scan();
     expect(books, hasLength(1));
     expect(books.single.title, '示例小说');
     expect((await restored.readBookContent('book-1'))?.text, '很久很久以前……');
@@ -60,7 +60,7 @@ void main() {
 
     await storage.deleteBook('book-1');
 
-    expect(await storage.readMetadataIndex(), isEmpty);
+    expect(await storage.scan(), isEmpty);
     expect(await storage.readBookContent('book-1'), isNull);
     expect(await File('${tempDir.path}/book-1.txt').exists(), isFalse);
   });

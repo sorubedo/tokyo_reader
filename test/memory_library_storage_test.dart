@@ -1,9 +1,10 @@
 import 'dart:convert';
 
+import 'package:fs_shim/fs_memory.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tokyo_reader/models/book_content.dart';
 import 'package:tokyo_reader/models/book_metadata.dart';
-import 'package:tokyo_reader/services/library_storage.dart';
+import 'package:tokyo_reader/services/directory_library_storage.dart';
 import 'package:tokyo_reader/services/memory_library_storage.dart';
 
 BookMetadata _metadata(String id, {String title = '示例小说'}) {
@@ -28,7 +29,7 @@ void main() {
         BookContent(text: '很久很久以前……'),
       );
 
-      final books = await storage.readMetadataIndex();
+      final books = await storage.scan();
       expect(books, hasLength(1));
       expect(books.single.id, 'book-1');
       expect(books.single.title, '示例小说');
@@ -44,7 +45,7 @@ void main() {
         BookContent(text: '新正文'),
       );
 
-      final books = await storage.readMetadataIndex();
+      final books = await storage.scan();
       expect(books, hasLength(1));
       expect(books.single.title, '新标题');
 
@@ -57,24 +58,25 @@ void main() {
 
       await storage.deleteBook('book-1');
 
-      expect(await storage.readMetadataIndex(), isEmpty);
+      expect(await storage.scan(), isEmpty);
       expect(await storage.readBookContent('book-1'), isNull);
-      final files = await storage.debugFiles();
-      expect(files.containsKey('book-1.txt'), isFalse);
     });
 
     test('未导入的书籍内容读取返回 null', () async {
       expect(await storage.readBookContent('missing'), isNull);
     });
+  });
 
-    test('元数据索引可单独写入并完整读回', () async {
-      final books = [_metadata('book-1', title: '索引之书')];
+  group('DirectoryLibraryStorage 布局', () {
+    late FileSystem fileSystem;
+    late DirectoryLibraryStorage storage;
 
-      await storage.writeMetadataIndex(books);
-
-      final restored = await storage.readMetadataIndex();
-      expect(restored, hasLength(1));
-      expect(restored.single.title, '索引之书');
+    setUp(() {
+      fileSystem = newFileSystemMemory();
+      storage = DirectoryLibraryStorage(
+        fileSystem: fileSystem,
+        rootPath: '/library',
+      );
     });
 
     test('书籍内容与元数据索引分离保存', () async {
@@ -83,18 +85,30 @@ void main() {
         BookContent(text: '只属于书籍文件的正文'),
       );
 
-      final files = await storage.debugFiles();
-      expect(files['book-1.txt'], '只属于书籍文件的正文');
-      expect(files['library.json'], isNot(contains('只属于书籍文件的正文')));
+      final bookFile = fileSystem.file('/library/book-1.txt');
+      final indexFile = fileSystem.file('/library/library.json');
+      expect(await bookFile.readAsString(), '只属于书籍文件的正文');
+      expect(await indexFile.readAsString(), isNot(contains('只属于书籍文件的正文')));
     });
 
     test('元数据索引包含当前 schema 版本', () async {
-      await storage.writeMetadataIndex([]);
+      await storage.scan();
 
-      final files = await storage.debugFiles();
-      final index = jsonDecode(files['library.json']!) as Map<String, dynamic>;
-      expect(index['schemaVersion'], LibraryStorage.schemaVersion);
+      final content = await fileSystem
+          .file('/library/library.json')
+          .readAsString();
+      final index = jsonDecode(content) as Map<String, dynamic>;
+      expect(index['schemaVersion'], 1);
       expect(index['books'], isEmpty);
+    });
+
+    test('拒绝不支持的元数据索引版本', () async {
+      await fileSystem.directory('/library').create(recursive: true);
+      await fileSystem
+          .file('/library/library.json')
+          .writeAsString(jsonEncode({'schemaVersion': 2, 'books': <Object>[]}));
+
+      await expectLater(storage.scan(), throwsStateError);
     });
   });
 }
