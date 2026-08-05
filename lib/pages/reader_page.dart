@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../core/tokyo_palette.dart';
+import '../models/book_content.dart';
 import '../providers/library_provider.dart';
 
 class ReaderPage extends StatefulWidget {
@@ -16,11 +17,24 @@ class ReaderPage extends StatefulWidget {
 class _ReaderPageState extends State<ReaderPage> {
   final ScrollController _scrollController = ScrollController();
   double _progress = 0;
+  BookContent? _content;
+  bool _contentRequested = false;
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_updateProgress);
+    _loadContent();
+  }
+
+  Future<void> _loadContent() async {
+    if (_contentRequested) return;
+    _contentRequested = true;
+    final content = await context.read<LibraryProvider>().readBookContent(
+      widget.bookId,
+    );
+    if (!mounted) return;
+    setState(() => _content = content);
   }
 
   @override
@@ -42,9 +56,9 @@ class _ReaderPageState extends State<ReaderPage> {
   @override
   Widget build(BuildContext context) {
     final palette = Theme.of(context).extension<TokyoPalette>()!;
-    final book = context.watch<LibraryProvider>().bookById(widget.bookId);
+    final metadata = context.watch<LibraryProvider>().bookById(widget.bookId);
 
-    if (book == null) {
+    if (metadata == null) {
       return Scaffold(
         appBar: AppBar(title: const Text('阅读')),
         body: Center(
@@ -55,38 +69,41 @@ class _ReaderPageState extends State<ReaderPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(book.title, maxLines: 1, overflow: TextOverflow.ellipsis),
+        title: Text(
+          metadata.title,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
       ),
       body: Column(
         children: [
-          Expanded(
-            child: Scrollbar(
-              controller: _scrollController,
-              child: SingleChildScrollView(
-                controller: _scrollController,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 28,
-                  vertical: 24,
-                ),
-                child: Align(
-                  alignment: Alignment.topCenter,
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 760),
-                    child: SelectableText(
-                      book.content,
-                      style: TextStyle(
-                        fontSize: 17,
-                        height: 1.9,
-                        color: palette.fg,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
+          Expanded(child: _buildBody(palette)),
           _ReaderProgress(progress: _progress),
         ],
+      ),
+    );
+  }
+
+  Widget _buildBody(TokyoPalette palette) {
+    final content = _content;
+    if (content == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    return Scrollbar(
+      controller: _scrollController,
+      child: SingleChildScrollView(
+        controller: _scrollController,
+        padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
+        child: Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 760),
+            child: SelectableText(
+              content.text,
+              style: TextStyle(fontSize: 17, height: 1.9, color: palette.fg),
+            ),
+          ),
+        ),
       ),
     );
   }

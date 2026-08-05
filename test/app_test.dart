@@ -8,9 +8,11 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:tokyo_reader/app.dart';
 import 'package:tokyo_reader/core/tokyo_palette.dart';
 import 'package:tokyo_reader/core/tokyo_theme.dart';
-import 'package:tokyo_reader/models/book.dart';
-import 'package:tokyo_reader/providers/library_provider.dart';
+import 'package:tokyo_reader/models/book_content.dart';
+import 'package:tokyo_reader/models/book_metadata.dart';
 import 'package:tokyo_reader/providers/theme_provider.dart';
+import 'package:tokyo_reader/services/library_storage.dart';
+import 'package:tokyo_reader/services/memory_library_storage.dart';
 
 void main() {
   late Directory tempDir;
@@ -18,12 +20,10 @@ void main() {
   setUpAll(() async {
     tempDir = await Directory.systemTemp.createTemp('tokyo_reader_test');
     Hive.init(tempDir.path);
-    await Hive.openBox(LibraryProvider.boxName, bytes: Uint8List(0));
     await Hive.openBox(ThemeProvider.boxName, bytes: Uint8List(0));
   });
 
   setUp(() async {
-    await Hive.box<dynamic>(LibraryProvider.boxName).clear();
     await Hive.box<dynamic>(ThemeProvider.boxName).clear();
   });
 
@@ -32,8 +32,11 @@ void main() {
     await tempDir.delete(recursive: true);
   });
 
-  Future<void> pumpApp(WidgetTester tester) async {
-    await tester.pumpWidget(const TokyoReaderApp());
+  Future<void> pumpApp(
+    WidgetTester tester, {
+    LibraryStorage? libraryStorage,
+  }) async {
+    await tester.pumpWidget(TokyoReaderApp(libraryStorage: libraryStorage));
     await tester.pumpAndSettle();
     final navigatorContext = tester.element(find.byType(Navigator).first);
     GoRouter.of(navigatorContext).go('/');
@@ -179,18 +182,17 @@ void main() {
   });
 
   testWidgets('阅读页不显示设置入口', (tester) async {
-    await Hive.box<dynamic>(
-      LibraryProvider.boxName,
-    ).put(LibraryProvider.booksKey, [
-      Book(
+    final storage = MemoryLibraryStorage();
+    await storage.writeBook(
+      BookMetadata(
         id: 'book-1',
         title: '测试之书',
-        content: '很久很久以前……',
         importedAt: DateTime(2026, 8, 5),
-      ).toJson(),
-    ]);
+      ),
+      BookContent(text: '很久很久以前……'),
+    );
 
-    await pumpApp(tester);
+    await pumpApp(tester, libraryStorage: storage);
     await tester.tap(find.text('测试之书'));
     await tester.pumpAndSettle();
 

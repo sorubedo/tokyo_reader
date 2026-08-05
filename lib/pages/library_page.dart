@@ -3,7 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../core/tokyo_palette.dart';
-import '../models/book.dart';
+import '../models/book_metadata.dart';
 import '../providers/library_provider.dart';
 import '../services/file_import_service.dart';
 
@@ -94,7 +94,7 @@ class _EmptyLibrary extends StatelessWidget {
 class _BookList extends StatelessWidget {
   const _BookList({required this.books});
 
-  final List<Book> books;
+  final List<BookMetadata> books;
 
   @override
   Widget build(BuildContext context) {
@@ -112,9 +112,7 @@ class _BookList extends StatelessWidget {
           ),
           leading: Icon(Icons.menu_book_rounded, color: palette.blue),
           title: Text(book.title, maxLines: 1, overflow: TextOverflow.ellipsis),
-          subtitle: Text(
-            '${book.characterCount} 字 · ${_formatDate(book.importedAt)}',
-          ),
+          subtitle: Text(_formatDate(book.importedAt)),
           trailing: IconButton(
             tooltip: '删除',
             icon: const Icon(Icons.delete_outline),
@@ -126,7 +124,7 @@ class _BookList extends StatelessWidget {
     );
   }
 
-  Future<void> _confirmDelete(BuildContext context, Book book) async {
+  Future<void> _confirmDelete(BuildContext context, BookMetadata book) async {
     final palette = Theme.of(context).extension<TokyoPalette>()!;
     final confirmed = await showDialog<bool>(
       context: context,
