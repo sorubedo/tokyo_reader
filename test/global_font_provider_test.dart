@@ -9,6 +9,7 @@ import 'package:tokyo_reader/services/font_source_service.dart';
 import 'package:tokyo_reader/services/global_font_storage.dart';
 
 const _validTtf = <int>[0x00, 0x01, 0x00, 0x00, 0x00, 0x10];
+const _validTtc = <int>[0x74, 0x74, 0x63, 0x66, 0x00, 0x01];
 
 class _FakeFontSourceService implements FontSourceService {
   _FakeFontSourceService({
@@ -85,6 +86,24 @@ void main() {
       expect(provider.effectiveFamily, 'tokyo_reader_imported_fake');
       expect(prefs.getString(GlobalFontProvider.sourceKey), 'imported');
       expect((await storage.read()), orderedEquals(_validTtf));
+    });
+
+    test('导入有效 TTC 字体后保存字节和选择', () async {
+      final storage = MemoryGlobalFontStorage();
+      final provider = GlobalFontProvider(
+        storage: storage,
+        sourceService: _FakeFontSourceService(),
+      );
+      await provider.init();
+
+      await provider.selectImported(
+        bytes: Uint8List.fromList(_validTtc),
+        fileName: 'NotoSansCJK-Regular.ttc',
+      );
+
+      expect(provider.selection.source, GlobalFontSource.imported);
+      expect(provider.selection.displayName, 'NotoSansCJK-Regular.ttc');
+      expect((await storage.read()), orderedEquals(_validTtc));
     });
 
     test('非法字体不会改变当前选择', () async {

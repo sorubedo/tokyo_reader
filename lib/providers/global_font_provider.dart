@@ -103,7 +103,7 @@ class GlobalFontProvider extends ChangeNotifier {
     }
     final normalizedName = fileName.trim();
     if (!_isSupportedFontFile(normalizedName) || !_looksLikeFont(bytes)) {
-      throw const FontSelectionException('请选择有效的 TTF 或 OTF 字体文件');
+      throw const FontSelectionException('请选择有效的 TTF、OTF 或 TTC 字体文件');
     }
 
     final alias = _importedAlias(bytes);
@@ -274,7 +274,9 @@ class GlobalFontProvider extends ChangeNotifier {
 
   bool _isSupportedFontFile(String fileName) {
     final lower = fileName.toLowerCase();
-    return lower.endsWith('.ttf') || lower.endsWith('.otf');
+    return lower.endsWith('.ttf') ||
+        lower.endsWith('.otf') ||
+        lower.endsWith('.ttc');
   }
 
   bool _looksLikeFont(Uint8List bytes) {

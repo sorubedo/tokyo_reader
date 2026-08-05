@@ -136,8 +136,8 @@ class _SettingsPageState extends State<SettingsPage> {
   Future<void> _importFont(GlobalFontProvider provider) async {
     const fontTypes = XTypeGroup(
       label: '字体',
-      extensions: ['ttf', 'otf'],
-      webWildCards: ['.ttf', '.otf'],
+      extensions: ['ttf', 'otf', 'ttc'],
+      webWildCards: ['.ttf', '.otf', '.ttc'],
     );
     final file = await openFile(acceptedTypeGroups: const [fontTypes]);
     if (file == null || !mounted) return;
