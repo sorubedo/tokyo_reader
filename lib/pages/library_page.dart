@@ -21,6 +21,7 @@ class LibraryPage extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(right: 12),
             child: FilledButton.icon(
+              key: const ValueKey('import_button'),
               onPressed: () => _importTxt(context),
               icon: const Icon(Icons.upload_file, size: 18),
               label: const Text('导入 TXT'),
@@ -29,6 +30,7 @@ class LibraryPage extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(right: 8),
             child: IconButton(
+              key: const ValueKey('settings_button'),
               tooltip: '设置',
               icon: const Icon(Icons.settings_outlined),
               onPressed: () => context.push('/settings'),
@@ -105,6 +107,7 @@ class _ChooseDirectory extends StatelessWidget {
           Text('还没有选择书库目录', style: TextStyle(fontSize: 16, color: palette.fg)),
           const SizedBox(height: 16),
           FilledButton.icon(
+            key: const ValueKey('choose_directory_button'),
             onPressed: onSelect,
             icon: const Icon(Icons.create_new_folder_outlined, size: 18),
             label: const Text('选择书库目录'),
@@ -154,6 +157,7 @@ class _BookList extends StatelessWidget {
       itemBuilder: (context, index) {
         final book = books[index];
         return ListTile(
+          key: ValueKey('book_${book.id}'),
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 12,
             vertical: 4,
@@ -165,6 +169,7 @@ class _BookList extends StatelessWidget {
             '${book.externalModified ? ' · 外部修改' : ''}',
           ),
           trailing: IconButton(
+            key: ValueKey('delete_${book.id}'),
             tooltip: '删除',
             icon: const Icon(Icons.delete_outline),
             onPressed: () => _confirmDelete(context, book),

@@ -105,6 +105,7 @@ class _ReaderPageState extends State<ReaderPage> {
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 760),
             child: SelectableText(
+              key: const ValueKey('reader_content'),
               content.text,
               style: TextStyle(fontSize: 17, height: 1.9, color: palette.fg),
             ),
@@ -143,6 +144,7 @@ class _ReaderProgress extends StatelessWidget {
           SizedBox(
             width: 52,
             child: Text(
+              key: const ValueKey('reader_progress'),
               '${(progress * 100).round()}%',
               textAlign: TextAlign.right,
               style: TextStyle(fontSize: 13, color: palette.fgDark),

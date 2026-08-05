@@ -39,6 +39,7 @@ class SettingsPage extends StatelessWidget {
               children: [
                 for (final variant in ThemeVariant.values)
                   RadioListTile<ThemeVariant>(
+                    key: ValueKey('theme_${variant.name}'),
                     value: variant,
                     title: Text(variant.label),
                     subtitle: Text(variant.description),
