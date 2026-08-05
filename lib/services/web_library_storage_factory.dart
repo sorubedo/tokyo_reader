@@ -23,9 +23,7 @@ class WebLibraryStorageFactory {
 
   Future<bool> _probeOpfs() async {
     try {
-      final probe = fileSystemOpfsWeb.directory('__opfs_probe__');
-      await probe.create(recursive: true);
-      await probe.delete();
+      await fileSystemOpfsWeb.directory('/').exists();
       return true;
     } catch (_) {
       return false;

@@ -1,6 +1,6 @@
 # 东京阅读（tokyo_reader）
 
-一个极简的 TXT 阅读器 Flutter Web 项目：书库 + 导入 TXT + 阅读页。
+一个极简的 TXT 阅读器（Flutter Web + 桌面）：书库 + 导入 TXT + 阅读页。
 
 ## 技术选型
 
