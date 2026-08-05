@@ -8,7 +8,6 @@ import 'pages/settings_page.dart';
 import 'providers/library_provider.dart';
 import 'providers/theme_provider.dart';
 import 'services/library_storage.dart';
-import 'services/memory_library_storage.dart';
 
 final GoRouter _router = GoRouter(
   initialLocation: '/',
@@ -36,9 +35,7 @@ class TokyoReaderApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(
-          create: (_) =>
-              LibraryProvider(storage: libraryStorage ?? MemoryLibraryStorage())
-                ..init(),
+          create: (_) => LibraryProvider(storage: libraryStorage)..init(),
         ),
         ChangeNotifierProvider(create: (_) => ThemeProvider()..init()),
       ],

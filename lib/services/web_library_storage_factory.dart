@@ -1,6 +1,5 @@
 import 'package:fs_shim/fs_browser.dart';
 import 'package:fs_shim/fs_opfs_web.dart';
-import 'package:fs_shim/fs_shim.dart';
 
 import 'directory_library_storage.dart';
 import 'library_storage.dart';
@@ -17,7 +16,8 @@ class WebLibraryStorageFactory {
     final useOpfs = await (opfsProbe ?? _probeOpfs)();
     final fileSystem = useOpfs
         ? (opfsFileSystem ?? fileSystemOpfsWeb)
-        : (fallbackFileSystem ?? fileSystemWeb);
+        : (fallbackFileSystem ??
+              newFileSystemWeb(name: 'tokyo_reader_library'));
     return DirectoryLibraryStorage(fileSystem: fileSystem, rootPath: 'library');
   }
 
