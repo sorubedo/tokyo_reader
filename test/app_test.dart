@@ -1,35 +1,18 @@
-import 'dart:io';
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
-import 'package:hive_flutter/hive_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tokyo_reader/app.dart';
 import 'package:tokyo_reader/core/tokyo_palette.dart';
 import 'package:tokyo_reader/core/tokyo_theme.dart';
 import 'package:tokyo_reader/models/book_content.dart';
 import 'package:tokyo_reader/models/book_metadata.dart';
-import 'package:tokyo_reader/providers/theme_provider.dart';
 import 'package:tokyo_reader/services/library_storage.dart';
 import 'package:tokyo_reader/services/memory_library_storage.dart';
 
 void main() {
-  late Directory tempDir;
-
-  setUpAll(() async {
-    tempDir = await Directory.systemTemp.createTemp('tokyo_reader_test');
-    Hive.init(tempDir.path);
-    await Hive.openBox(ThemeProvider.boxName, bytes: Uint8List(0));
-  });
-
   setUp(() async {
-    await Hive.box<dynamic>(ThemeProvider.boxName).clear();
-  });
-
-  tearDownAll(() async {
-    await Hive.close();
-    await tempDir.delete(recursive: true);
+    SharedPreferences.setMockInitialValues({});
   });
 
   Future<void> pumpApp(

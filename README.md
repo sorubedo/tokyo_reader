@@ -8,7 +8,10 @@
 | --- | --- | --- |
 | Adwaita 风格主题 | [`adwaita_gtk`](https://pub.dev/packages/adwaita_gtk) |
 | 选择 txt 文件 | [`file_selector`](https://pub.dev/packages/file_selector) |
-| 书库持久化 | [`hive`](https://pub.dev/packages/hive) / [`hive_flutter`](https://pub.dev/packages/hive_flutter) |
+| 书库文件系统 | [`fs_shim`](https://pub.dev/packages/fs_shim)（IO / OPFS / IndexedDB / 内存） |
+| 桌面目录选择 | [`dir_picker`](https://pub.dev/packages/dir_picker) |
+| 偏好持久化 | [`shared_preferences`](https://pub.dev/packages/shared_preferences) |
+| 内容指纹 | [`crypto`](https://pub.dev/packages/crypto) |
 | 状态管理 | [`provider`](https://pub.dev/packages/provider) |
 | 路由 | [`go_router`](https://pub.dev/packages/go_router) |
 
