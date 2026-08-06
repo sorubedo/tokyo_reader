@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:fs_shim/fs_memory.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
@@ -22,76 +23,125 @@ Widget _wrap(LibraryProvider provider) {
 }
 
 void main() {
-  testWidgets('空书库显示提示和导入按钮', (tester) async {
-    final provider = LibraryProvider(storage: MemoryLibraryStorage());
-    await tester.runAsync(() => provider.init());
+  group('LibraryPage', () {
+    testWidgets('空书库显示提示和导入按钮', (tester) async {
+      final provider = LibraryProvider(storage: MemoryLibraryStorage());
+      await tester.runAsync(() => provider.init());
 
-    await tester.pumpWidget(_wrap(provider));
+      await tester.pumpWidget(_wrap(provider));
 
-    expect(find.text('书库'), findsOneWidget);
-    expect(find.text('导入 TXT'), findsOneWidget);
-    expect(find.text('书库还是空的'), findsOneWidget);
-  });
-
-  testWidgets('未选择目录时显示选择书库目录', (tester) async {
-    final provider = LibraryProvider();
-    await tester.runAsync(() => provider.init());
-
-    await tester.pumpWidget(_wrap(provider));
-
-    expect(find.text('选择书库目录'), findsOneWidget);
-    final importButton = tester.widget<FilledButton>(
-      find.byKey(const ValueKey('import_button')),
-    );
-    expect(importButton.onPressed, isNull);
-  });
-
-  testWidgets('书库列出已导入书籍', (tester) async {
-    final storage = MemoryLibraryStorage();
-    final provider = LibraryProvider(storage: storage);
-    await tester.runAsync(() async {
-      await storage.writeBook(
-        BookMetadata(
-          id: 'book-1',
-          title: '示例小说',
-          importedAt: DateTime(2026, 8, 5),
-        ),
-        BookContent(text: '很久很久以前……'),
-      );
-      await provider.init();
+      expect(find.text('书库'), findsOneWidget);
+      expect(find.text('导入 TXT'), findsOneWidget);
+      expect(find.text('书库还是空的'), findsOneWidget);
     });
 
-    await tester.pumpWidget(_wrap(provider));
+    testWidgets('未选择目录时显示选择书库目录', (tester) async {
+      final provider = LibraryProvider();
+      await tester.runAsync(() => provider.init());
 
-    expect(find.text('示例小说'), findsOneWidget);
-    expect(find.textContaining('2026-08-05'), findsOneWidget);
-  });
+      await tester.pumpWidget(_wrap(provider));
 
-  testWidgets('外部修改的书籍在书库页显示标记', (tester) async {
-    final fileSystem = newFileSystemMemory();
-    final storage = DirectoryLibraryStorage(
-      fileSystem: fileSystem,
-      rootPath: '/library',
-    );
-    final provider = LibraryProvider(storage: storage);
-    await tester.runAsync(() async {
-      await storage.writeBook(
-        BookMetadata(
-          id: 'book-1',
-          title: '示例小说',
-          importedAt: DateTime(2026, 8, 5),
-        ),
-        BookContent(text: '旧正文'),
+      expect(find.text('选择书库目录'), findsOneWidget);
+      final importButton = tester.widget<FilledButton>(
+        find.byKey(const ValueKey('import_button')),
       );
-      await provider.init();
-      final file = fileSystem.file(p.join('/library', 'book-1.txt'));
-      await file.writeAsString('外部改写的正文');
-      await provider.refresh();
+      expect(importButton.onPressed, isNull);
     });
 
-    await tester.pumpWidget(_wrap(provider));
+    testWidgets('书库列出已导入书籍', (tester) async {
+      final storage = MemoryLibraryStorage();
+      final provider = LibraryProvider(storage: storage);
+      await tester.runAsync(() async {
+        await storage.writeBook(
+          BookMetadata(
+            id: 'book-1',
+            title: '示例小说',
+            importedAt: DateTime(2026, 8, 5),
+          ),
+          BookContent(text: '很久很久以前……'),
+        );
+        await provider.init();
+      });
 
-    expect(find.text('示例小说'), findsOneWidget);
-    expect(find.textContaining('外部修改'), findsOneWidget);
+      await tester.pumpWidget(_wrap(provider));
+
+      expect(find.text('示例小说'), findsOneWidget);
+      expect(find.textContaining('2026-08-05'), findsOneWidget);
+    });
+
+    testWidgets('外部修改的书籍在书库页显示标记', (tester) async {
+      final fileSystem = newFileSystemMemory();
+      final storage = DirectoryLibraryStorage(
+        fileSystem: fileSystem,
+        rootPath: '/library',
+      );
+      final provider = LibraryProvider(storage: storage);
+      await tester.runAsync(() async {
+        await storage.writeBook(
+          BookMetadata(
+            id: 'book-1',
+            title: '示例小说',
+            importedAt: DateTime(2026, 8, 5),
+          ),
+          BookContent(text: '旧正文'),
+        );
+        await provider.init();
+        final file = fileSystem.file(p.join('/library', 'book-1.txt'));
+        await file.writeAsString('外部改写的正文');
+        await provider.refresh();
+      });
+
+      await tester.pumpWidget(_wrap(provider));
+
+      expect(find.text('示例小说'), findsOneWidget);
+      expect(find.textContaining('外部修改'), findsOneWidget);
+    });
+
+    testWidgets('书籍菜单删除先确认，Enter 和 Esc 都不会误删书籍', (tester) async {
+      final storage = MemoryLibraryStorage();
+      final provider = LibraryProvider(storage: storage);
+      await tester.runAsync(() async {
+        await storage.writeBook(
+          BookMetadata(
+            id: 'book-1',
+            title: '待删除之书',
+            importedAt: DateTime(2026, 8, 5),
+          ),
+          BookContent(text: '正文'),
+        );
+        await provider.init();
+      });
+      await tester.pumpWidget(_wrap(provider));
+
+      await tester.tap(find.byKey(const ValueKey('delete_book-1')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('delete_menu_book-1')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('删除书籍'), findsOneWidget);
+      expect(find.textContaining('《待删除之书》'), findsOneWidget);
+      expect(
+        tester
+            .widget<TextButton>(find.widgetWithText(TextButton, '取消'))
+            .autofocus,
+        isTrue,
+      );
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pumpAndSettle();
+
+      expect(find.text('待删除之书'), findsOneWidget);
+      expect(provider.bookById('book-1'), isNotNull);
+
+      await tester.tap(find.byKey(const ValueKey('delete_book-1')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('delete_menu_book-1')));
+      await tester.pumpAndSettle();
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+
+      expect(find.text('待删除之书'), findsOneWidget);
+      expect(provider.bookById('book-1'), isNotNull);
+    });
   });
 }

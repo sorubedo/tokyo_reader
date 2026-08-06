@@ -21,6 +21,14 @@ class TokyoStorm extends TokyoPalette {
         yellow: const Color(0xFFE0AF68),
         green: const Color(0xFF9ECE6A),
         red: const Color(0xFFF7768E),
+        accentValue: const Color(0xFF7AA2F7),
+        destructiveValue: const Color(0xFFF7768E),
+        successValue: const Color(0xFF9ECE6A),
+        warningValue: const Color(0xFFE0AF68),
+        windowValue: const Color(0xFF24283B),
+        viewValue: const Color(0xFF24283B),
+        headerBarValue: const Color(0xFF1F2335),
+        borderValue: const Color(0xFF565F89),
       );
 
   static const TokyoStorm tokyoStorm = TokyoStorm();

@@ -21,6 +21,19 @@ class TokyoPalette extends ThemeExtension<TokyoPalette> {
     required this.yellow,
     required this.green,
     required this.red,
+    this.accentValue,
+    this.destructiveValue,
+    this.successValue,
+    this.warningValue,
+    this.windowValue,
+    this.viewValue,
+    this.headerBarValue,
+    this.borderValue,
+    this.onAccentValue,
+    this.onDestructiveValue,
+    this.onSuccessValue,
+    this.textValue,
+    this.textMutedValue,
   });
 
   final Color bg;
@@ -37,6 +50,37 @@ class TokyoPalette extends ThemeExtension<TokyoPalette> {
   final Color yellow;
   final Color green;
   final Color red;
+  final Color? accentValue;
+  final Color? destructiveValue;
+  final Color? successValue;
+  final Color? warningValue;
+  final Color? windowValue;
+  final Color? viewValue;
+  final Color? headerBarValue;
+  final Color? borderValue;
+  final Color? onAccentValue;
+  final Color? onDestructiveValue;
+  final Color? onSuccessValue;
+  final Color? textValue;
+  final Color? textMutedValue;
+
+  /// Stable semantic roles consumed by the application shell and pages.
+  ///
+  /// The raw Tokyo colors above remain available for backwards-compatible
+  /// theme construction, but UI code should use these roles instead.
+  Color get accent => accentValue ?? blue;
+  Color get destructive => destructiveValue ?? red;
+  Color get success => successValue ?? green;
+  Color get warning => warningValue ?? orange;
+  Color get window => windowValue ?? bg;
+  Color get view => viewValue ?? bgHighlight;
+  Color get headerBar => headerBarValue ?? bgDark;
+  Color get border => borderValue ?? comment;
+  Color get onAccent => onAccentValue ?? bg;
+  Color get onDestructive => onDestructiveValue ?? bg;
+  Color get onSuccess => onSuccessValue ?? bg;
+  Color get text => textValue ?? fg;
+  Color get textMuted => textMutedValue ?? fgDark;
 
   @override
   TokyoPalette copyWith({
@@ -54,6 +98,19 @@ class TokyoPalette extends ThemeExtension<TokyoPalette> {
     Color? yellow,
     Color? green,
     Color? red,
+    Color? accent,
+    Color? destructive,
+    Color? success,
+    Color? warning,
+    Color? window,
+    Color? view,
+    Color? headerBar,
+    Color? border,
+    Color? onAccent,
+    Color? onDestructive,
+    Color? onSuccess,
+    Color? text,
+    Color? textMuted,
   }) {
     return TokyoPalette(
       bg: bg ?? this.bg,
@@ -70,6 +127,19 @@ class TokyoPalette extends ThemeExtension<TokyoPalette> {
       yellow: yellow ?? this.yellow,
       green: green ?? this.green,
       red: red ?? this.red,
+      accentValue: accent ?? this.accent,
+      destructiveValue: destructive ?? this.destructive,
+      successValue: success ?? this.success,
+      warningValue: warning ?? this.warning,
+      windowValue: window ?? this.window,
+      viewValue: view ?? this.view,
+      headerBarValue: headerBar ?? this.headerBar,
+      borderValue: border ?? this.border,
+      onAccentValue: onAccent ?? this.onAccent,
+      onDestructiveValue: onDestructive ?? this.onDestructive,
+      onSuccessValue: onSuccess ?? this.onSuccess,
+      textValue: text ?? this.text,
+      textMutedValue: textMuted ?? this.textMuted,
     );
   }
 
@@ -91,6 +161,19 @@ class TokyoPalette extends ThemeExtension<TokyoPalette> {
       yellow: Color.lerp(yellow, other.yellow, t)!,
       green: Color.lerp(green, other.green, t)!,
       red: Color.lerp(red, other.red, t)!,
+      accentValue: Color.lerp(accent, other.accent, t)!,
+      destructiveValue: Color.lerp(destructive, other.destructive, t)!,
+      successValue: Color.lerp(success, other.success, t)!,
+      warningValue: Color.lerp(warning, other.warning, t)!,
+      windowValue: Color.lerp(window, other.window, t)!,
+      viewValue: Color.lerp(view, other.view, t)!,
+      headerBarValue: Color.lerp(headerBar, other.headerBar, t)!,
+      borderValue: Color.lerp(border, other.border, t)!,
+      onAccentValue: Color.lerp(onAccent, other.onAccent, t)!,
+      onDestructiveValue: Color.lerp(onDestructive, other.onDestructive, t)!,
+      onSuccessValue: Color.lerp(onSuccess, other.onSuccess, t)!,
+      textValue: Color.lerp(text, other.text, t)!,
+      textMutedValue: Color.lerp(textMuted, other.textMuted, t)!,
     );
   }
 }

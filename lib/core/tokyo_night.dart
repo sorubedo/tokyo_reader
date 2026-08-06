@@ -21,6 +21,14 @@ class TokyoNight extends TokyoPalette {
         yellow: const Color(0xFFE0AF68),
         green: const Color(0xFF9ECE6A),
         red: const Color(0xFFF7768E),
+        accentValue: const Color(0xFF7AA2F7),
+        destructiveValue: const Color(0xFFF7768E),
+        successValue: const Color(0xFF9ECE6A),
+        warningValue: const Color(0xFFE0AF68),
+        windowValue: const Color(0xFF1A1B26),
+        viewValue: const Color(0xFF1A1B26),
+        headerBarValue: const Color(0xFF16161E),
+        borderValue: const Color(0xFF565F89),
       );
 
   static const TokyoNight tokyoNight = TokyoNight();

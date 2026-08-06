@@ -21,6 +21,18 @@ class TokyoDay extends TokyoPalette {
         yellow: const Color(0xFF8C6C3E),
         green: const Color(0xFF587539),
         red: const Color(0xFFF52A65),
+        accentValue: const Color(0xFF1D5FBF),
+        destructiveValue: const Color(0xFFB91C4C),
+        successValue: const Color(0xFF587539),
+        warningValue: const Color(0xFF8C6C3E),
+        windowValue: const Color(0xFFE1E2E7),
+        viewValue: const Color(0xFFE1E2E7),
+        headerBarValue: const Color(0xFFD0D5E3),
+        borderValue: const Color(0xFF848CB5),
+        onAccentValue: const Color(0xFFFFFFFF),
+        onDestructiveValue: const Color(0xFFFFFFFF),
+        onSuccessValue: const Color(0xFFFFFFFF),
+        textMutedValue: const Color(0xFF565F89),
       );
 
   static const TokyoDay tokyoDay = TokyoDay();

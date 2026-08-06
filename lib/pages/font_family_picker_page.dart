@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../widgets/adwaita_components.dart';
+
 class FontFamilyPickerPage extends StatefulWidget {
   const FontFamilyPickerPage({
     required this.title,
@@ -35,7 +37,7 @@ class _FontFamilyPickerPageState extends State<FontFamilyPickerPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.title)),
+      appBar: AppHeaderBar(title: widget.title, showBack: true),
       body: Column(
         children: [
           Padding(

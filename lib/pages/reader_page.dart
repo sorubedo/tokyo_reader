@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../core/tokyo_palette.dart';
 import '../models/book_content.dart';
 import '../providers/library_provider.dart';
+import '../widgets/adwaita_components.dart';
 
 class ReaderPage extends StatefulWidget {
   const ReaderPage({super.key, required this.bookId});
@@ -61,21 +62,15 @@ class _ReaderPageState extends State<ReaderPage> {
 
     if (metadata == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('阅读')),
+        appBar: const AppHeaderBar(title: '阅读', showBack: true),
         body: Center(
-          child: Text('书籍不存在或已删除', style: TextStyle(color: palette.fgDark)),
+          child: Text('书籍不存在或已删除', style: TextStyle(color: palette.textMuted)),
         ),
       );
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          metadata.title,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-      ),
+      appBar: AppHeaderBar(title: metadata.title, showBack: true),
       body: Column(
         children: [
           Expanded(child: _buildBody(palette)),
@@ -92,14 +87,17 @@ class _ReaderPageState extends State<ReaderPage> {
     final content = _content;
     if (content == null) {
       return Center(
-        child: Text('书籍内容读取失败', style: TextStyle(color: palette.fgDark)),
+        child: Text('书籍内容读取失败', style: TextStyle(color: palette.textMuted)),
       );
     }
     return Scrollbar(
       controller: _scrollController,
       child: SingleChildScrollView(
         controller: _scrollController,
-        padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
+        padding: EdgeInsets.symmetric(
+          horizontal: MediaQuery.sizeOf(context).width < 480 ? 18 : 28,
+          vertical: 24,
+        ),
         child: Align(
           alignment: Alignment.topCenter,
           child: ConstrainedBox(
@@ -107,7 +105,7 @@ class _ReaderPageState extends State<ReaderPage> {
             child: SelectableText(
               key: const ValueKey('reader_content'),
               content.text,
-              style: TextStyle(fontSize: 17, height: 1.9, color: palette.fg),
+              style: TextStyle(fontSize: 17, height: 1.9, color: palette.text),
             ),
           ),
         ),
@@ -126,7 +124,7 @@ class _ReaderProgress extends StatelessWidget {
     final palette = Theme.of(context).extension<TokyoPalette>()!;
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
-      color: palette.bgDark,
+      color: palette.headerBar,
       child: Row(
         children: [
           Expanded(
@@ -135,8 +133,8 @@ class _ReaderProgress extends StatelessWidget {
               child: LinearProgressIndicator(
                 value: progress,
                 minHeight: 4,
-                backgroundColor: palette.bgHighlight,
-                color: palette.blue,
+                backgroundColor: palette.border.withValues(alpha: 0.35),
+                color: palette.accent,
               ),
             ),
           ),
@@ -147,7 +145,7 @@ class _ReaderProgress extends StatelessWidget {
               key: const ValueKey('reader_progress'),
               '${(progress * 100).round()}%',
               textAlign: TextAlign.right,
-              style: TextStyle(fontSize: 13, color: palette.fgDark),
+              style: TextStyle(fontSize: 13, color: palette.textMuted),
             ),
           ),
         ],

@@ -36,6 +36,13 @@ class GlobalFontSelection {
 
   bool get isSystemDefault => source == GlobalFontSource.systemDefault;
 
+  String get displayLabel => switch (source) {
+    GlobalFontSource.systemDefault => '系统默认',
+    GlobalFontSource.system => family ?? '系统默认',
+    GlobalFontSource.imported => displayName ?? '导入字体',
+    GlobalFontSource.google => family ?? 'Google Fonts',
+  };
+
   GlobalFontSelection copyWith({
     GlobalFontSource? source,
     String? family,
