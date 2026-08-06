@@ -121,7 +121,7 @@ class _EmptyLibrary extends StatelessWidget {
         key: const ValueKey('empty_import_button'),
         onPressed: onImport,
         icon: const Icon(Icons.upload_file, size: 18),
-        label: const Text('导入书籍'),
+        label: const Text('导入 TXT'),
       ),
     );
   }
@@ -138,13 +138,15 @@ class _BookList extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       children: [
-        BoxedList(
-          children: [
-            for (var index = 0; index < books.length; index++) ...[
-              if (index > 0) const Divider(height: 1),
-              _bookRow(context, books[index], palette),
+        Center(
+          child: BoxedList(
+            children: [
+              for (var index = 0; index < books.length; index++) ...[
+                if (index > 0) const Divider(height: 1),
+                _bookRow(context, books[index], palette),
+              ],
             ],
-          ],
+          ),
         ),
       ],
     );
@@ -200,7 +202,12 @@ class _BookList extends StatelessWidget {
     );
     if (confirmed) {
       if (!context.mounted) return;
-      await context.read<LibraryProvider>().deleteBook(book.id);
+      try {
+        await context.read<LibraryProvider>().deleteBook(book.id);
+      } catch (error) {
+        if (!context.mounted) return;
+        showAppToast(context, '删除失败：$error', kind: AppToastKind.error);
+      }
     }
   }
 
