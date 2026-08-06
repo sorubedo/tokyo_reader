@@ -62,6 +62,36 @@ void main() {
       expect(find.text('默认深色主题'), findsOneWidget);
     });
 
+    for (final viewportSize in [const Size(800, 600), const Size(360, 640)]) {
+      testWidgets('${viewportSize.width.toInt()}px 下主题菜单锚定到右侧选择控件下方', (
+        tester,
+      ) async {
+        tester.view.physicalSize = viewportSize;
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        await pumpApp(tester);
+
+        await tester.tap(find.byTooltip('设置'));
+        await tester.pumpAndSettle();
+
+        final comboFinder = find.byType(PopupMenuButton<ThemeVariant>);
+        final rowFinder = find.byKey(const ValueKey('theme_combo_row'));
+        final comboRect = tester.getRect(comboFinder);
+        final rowRect = tester.getRect(rowFinder);
+
+        await tester.tap(rowFinder);
+        await tester.pumpAndSettle();
+
+        final firstItemRect = tester.getRect(
+          find.byType(PopupMenuItem<ThemeVariant>).first,
+        );
+        expect(comboRect.width, lessThan(rowRect.width / 2));
+        expect(firstItemRect.right, closeTo(comboRect.right, 1));
+        expect(firstItemRect.top, greaterThanOrEqualTo(comboRect.bottom));
+      });
+    }
+
     testWidgets('Linux 字体入口只展示系统默认和系统字体', (tester) async {
       await pumpApp(tester);
 

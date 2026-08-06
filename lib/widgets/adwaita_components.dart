@@ -274,7 +274,7 @@ class ComboOption<T> {
 
 /// A compact preference row that opens its options in a keyboard-accessible
 /// popover.
-class ComboRow<T> extends StatelessWidget {
+class ComboRow<T> extends StatefulWidget {
   const ComboRow({
     required this.title,
     required this.value,
@@ -291,46 +291,60 @@ class ComboRow<T> extends StatelessWidget {
   final ValueChanged<T> onChanged;
 
   @override
+  State<ComboRow<T>> createState() => _ComboRowState<T>();
+}
+
+class _ComboRowState<T> extends State<ComboRow<T>> {
+  final _menuKey = GlobalKey<PopupMenuButtonState<T>>();
+
+  @override
   Widget build(BuildContext context) {
-    final selected = options.firstWhere((option) => option.value == value);
-    return PopupMenuButton<T>(
-      initialValue: value,
-      tooltip: title,
-      popUpAnimationStyle: appAnimationStyle(context),
-      onSelected: onChanged,
-      itemBuilder: (context) => [
-        for (final option in options)
-          PopupMenuItem<T>(
-            value: option.value,
-            child: Row(
-              children: [
-                if (option.swatch != null) ...[
-                  _ColorSwatch(color: option.swatch!),
-                  const SizedBox(width: 10),
-                ],
-                Expanded(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(option.label),
-                      Text(
-                        option.description,
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                    ],
+    final selected = widget.options.firstWhere(
+      (option) => option.value == widget.value,
+    );
+    return ListTile(
+      title: Text(widget.title),
+      subtitle: widget.subtitle == null ? null : Text(widget.subtitle!),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+      onTap: () => _menuKey.currentState?.showButtonMenu(),
+      trailing: PopupMenuButton<T>(
+        key: _menuKey,
+        initialValue: widget.value,
+        tooltip: widget.title,
+        position: PopupMenuPosition.under,
+        padding: EdgeInsets.zero,
+        popUpAnimationStyle: appAnimationStyle(context),
+        onSelected: widget.onChanged,
+        itemBuilder: (context) => [
+          for (final option in widget.options)
+            PopupMenuItem<T>(
+              value: option.value,
+              child: Row(
+                children: [
+                  if (option.swatch != null) ...[
+                    _ColorSwatch(color: option.swatch!),
+                    const SizedBox(width: 10),
+                  ],
+                  Expanded(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(option.label),
+                        Text(
+                          option.description,
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                if (option.value == value) const Icon(Icons.check, size: 18),
-              ],
+                  if (option.value == widget.value)
+                    const Icon(Icons.check, size: 18),
+                ],
+              ),
             ),
-          ),
-      ],
-      child: ListTile(
-        title: Text(title),
-        subtitle: subtitle == null ? null : Text(subtitle!),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
-        trailing: Row(
+        ],
+        child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(selected.label),
