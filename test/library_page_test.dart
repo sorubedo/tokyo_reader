@@ -66,6 +66,23 @@ Future<LibraryProvider> _pumpLibraryWithBook(
   return provider;
 }
 
+Future<void> _openBookMenu(
+  WidgetTester tester, {
+  String bookId = 'book-1',
+}) async {
+  await tester.tap(find.byKey(ValueKey('delete_$bookId')));
+  await tester.pumpAndSettle();
+}
+
+Future<void> _openDeleteDialog(
+  WidgetTester tester, {
+  String bookId = 'book-1',
+}) async {
+  await _openBookMenu(tester, bookId: bookId);
+  await tester.tap(find.byKey(ValueKey('delete_menu_$bookId')));
+  await tester.pumpAndSettle();
+}
+
 void main() {
   group('LibraryPage', () {
     testWidgets('空书库显示提示和两个导入入口', (tester) async {
@@ -234,8 +251,7 @@ void main() {
       final semantics = tester.ensureSemantics();
       await _pumpLibraryWithBook(tester, title: '危险操作之书');
 
-      await tester.tap(find.byTooltip('《危险操作之书》的更多操作'));
-      await tester.pumpAndSettle();
+      await _openBookMenu(tester);
 
       expect(find.text('删除'), findsOneWidget);
       expect(find.byIcon(Icons.delete_outline), findsOneWidget);
@@ -246,10 +262,7 @@ void main() {
     testWidgets('点击取消关闭对话框并保留书籍', (tester) async {
       final provider = await _pumpLibraryWithBook(tester, title: '取消删除之书');
 
-      await tester.tap(find.byTooltip('《取消删除之书》的更多操作'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('删除'));
-      await tester.pumpAndSettle();
+      await _openDeleteDialog(tester);
 
       expect(find.textContaining('《取消删除之书》'), findsOneWidget);
       final cancelButton = tester.widget<TextButton>(
@@ -268,10 +281,7 @@ void main() {
     testWidgets('明确确认后删除书籍', (tester) async {
       final provider = await _pumpLibraryWithBook(tester, title: '确认删除之书');
 
-      await tester.tap(find.byTooltip('《确认删除之书》的更多操作'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('删除'));
-      await tester.pumpAndSettle();
+      await _openDeleteDialog(tester);
       await tester.tap(find.widgetWithText(TextButton, '删除'));
       await tester.pumpAndSettle();
 
@@ -290,8 +300,7 @@ void main() {
         addTearDown(tester.view.resetDevicePixelRatio);
         await _pumpLibraryWithBook(tester, title: '一本需要谨慎删除的长书名');
 
-        await tester.tap(find.byTooltip('《一本需要谨慎删除的长书名》的更多操作'));
-        await tester.pumpAndSettle();
+        await _openBookMenu(tester);
 
         final menuItem = find.text('删除');
         _expectInsideViewport(tester, menuItem, viewportSize);
@@ -357,10 +366,7 @@ void main() {
       final storage = _DeleteFailingStorage();
       await _pumpLibraryWithBook(tester, title: '待删除之书', storage: storage);
 
-      await tester.tap(find.byKey(const ValueKey('delete_book-1')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const ValueKey('delete_menu_book-1')));
-      await tester.pumpAndSettle();
+      await _openDeleteDialog(tester);
       await tester.tap(find.widgetWithText(TextButton, '删除').last);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 180));

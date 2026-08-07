@@ -49,6 +49,12 @@ void main() {
     await tester.tap(find.text('删除'));
     await _settle(tester);
 
+    expect(find.text('删除书籍'), findsOneWidget);
+    expect(find.textContaining('《示例小说》'), findsOneWidget);
+
+    await tester.tap(find.widgetWithText(TextButton, '删除'));
+    await _settle(tester);
+
     expect(find.text('书库还是空的'), findsOneWidget);
 
     await tester.tap(find.byKey(const ValueKey('settings_button')));
