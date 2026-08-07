@@ -226,6 +226,51 @@ class BoxedList extends StatelessWidget {
   }
 }
 
+/// A labelled group of related preferences on a shared boxed surface.
+class PreferencesGroup extends StatelessWidget {
+  const PreferencesGroup({
+    required this.title,
+    required this.children,
+    super.key,
+  });
+
+  final String title;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = Theme.of(context).extension<TokyoPalette>()!;
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 760),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Semantics(
+                container: true,
+                excludeSemantics: true,
+                header: true,
+                label: title,
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: palette.textMuted,
+                  ),
+                ),
+              ),
+            ),
+            BoxedList(children: children),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 /// A preference/action row with consistent focus, hover and disabled behavior.
 class ActionRow extends StatelessWidget {
   const ActionRow({
@@ -263,13 +308,13 @@ class ComboOption<T> {
     required this.value,
     required this.label,
     required this.description,
-    this.swatch,
+    this.swatch = const [],
   });
 
   final T value;
   final String label;
   final String description;
-  final Color? swatch;
+  final List<Color> swatch;
 }
 
 /// A compact preference row that opens its options in a keyboard-accessible
@@ -321,8 +366,11 @@ class _ComboRowState<T> extends State<ComboRow<T>> {
               value: option.value,
               child: Row(
                 children: [
-                  if (option.swatch != null) ...[
-                    _ColorSwatch(color: option.swatch!),
+                  if (option.swatch.isNotEmpty) ...[
+                    _ColorSwatch(
+                      colors: option.swatch,
+                      semanticLabel: '${option.label} 配色色板',
+                    ),
                     const SizedBox(width: 10),
                   ],
                   Expanded(
@@ -358,19 +406,34 @@ class _ComboRowState<T> extends State<ComboRow<T>> {
 }
 
 class _ColorSwatch extends StatelessWidget {
-  const _ColorSwatch({required this.color});
+  const _ColorSwatch({required this.colors, required this.semanticLabel});
 
-  final Color color;
+  final List<Color> colors;
+  final String semanticLabel;
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: Theme.of(context).colorScheme.outline),
+    return Semantics(
+      label: semanticLabel,
+      image: true,
+      child: ExcludeSemantics(
+        child: Container(
+          width: 36,
+          height: 18,
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(color: Theme.of(context).colorScheme.outline),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (final color in colors)
+                Expanded(child: ColoredBox(color: color)),
+            ],
+          ),
+        ),
       ),
-      child: const SizedBox(width: 16, height: 16),
     );
   }
 }

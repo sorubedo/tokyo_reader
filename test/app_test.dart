@@ -1,4 +1,7 @@
+import 'dart:ui' show Tristate;
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fs_shim/fs_memory.dart';
 import 'package:go_router/go_router.dart';
@@ -49,6 +52,29 @@ class _FakeTxtFilePicker implements TxtFilePicker {
     if (error != null) throw error;
     return result;
   }
+}
+
+bool _primaryFocusIsWithin(WidgetTester tester, Finder finder) {
+  final target = tester.element(finder);
+  final focusedContext = FocusManager.instance.primaryFocus?.context;
+  if (focusedContext == null) return false;
+  if (identical(focusedContext, target)) return true;
+
+  var found = false;
+  focusedContext.visitAncestorElements((element) {
+    found = identical(element, target);
+    return !found;
+  });
+  return found;
+}
+
+Future<void> _focusWithTab(WidgetTester tester, Finder finder) async {
+  for (var index = 0; index < 10; index++) {
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.pump();
+    if (_primaryFocusIsWithin(tester, finder)) return;
+  }
+  fail('Tab 未能将焦点移动到 $finder');
 }
 
 void main() {
@@ -195,7 +221,7 @@ void main() {
       expect(find.byKey(const ValueKey('delete_book-1')), findsOneWidget);
     });
 
-    testWidgets('从书库进入设置页，Combo Row 展示三种主题且默认选中 Tokyo 夜', (tester) async {
+    testWidgets('从书库进入设置页，Combo Row 展示三种主题且默认选中 Tokyo Night', (tester) async {
       await pumpApp(tester);
 
       await tester.tap(find.byTooltip('设置'));
@@ -203,9 +229,9 @@ void main() {
 
       expect(find.text('设置'), findsOneWidget);
       expect(find.text('外观'), findsOneWidget);
-      expect(find.text('Tokyo 夜'), findsOneWidget);
-      expect(find.text('Tokyo 日'), findsNothing);
-      expect(find.text('Tokyo 风暴'), findsNothing);
+      expect(find.text('Tokyo Night'), findsOneWidget);
+      expect(find.text('Tokyo Day'), findsNothing);
+      expect(find.text('Tokyo Storm'), findsNothing);
       expect(find.text('字体'), findsOneWidget);
       expect(find.text('全局字体'), findsOneWidget);
       expect(find.text('系统默认'), findsOneWidget);
@@ -218,9 +244,79 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('theme_combo_row')));
       await tester.pumpAndSettle();
 
-      expect(find.text('Tokyo 日'), findsOneWidget);
-      expect(find.text('Tokyo 风暴'), findsOneWidget);
-      expect(find.text('默认深色主题'), findsOneWidget);
+      expect(find.text('Tokyo Day'), findsOneWidget);
+      expect(find.text('Tokyo Storm'), findsOneWidget);
+      expect(find.text('默认深色主题变体'), findsOneWidget);
+    });
+
+    testWidgets('设置页显示固定主题名称、当前主题变体和配色色板', (tester) async {
+      final semantics = tester.ensureSemantics();
+      await pumpApp(tester);
+
+      await tester.tap(find.byTooltip('设置'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Tokyo Night'), findsOneWidget);
+      expect(find.text('当前主题变体：Tokyo Night'), findsOneWidget);
+      for (final heading in ['外观', '字体']) {
+        final node = tester.getSemantics(find.bySemanticsLabel(heading));
+        expect(node.flagsCollection.isHeader, isTrue);
+        expect(node.flagsCollection.isFocused, Tristate.none);
+      }
+
+      await tester.tap(find.byKey(const ValueKey('theme_combo_row')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Tokyo Day'), findsOneWidget);
+      expect(find.text('Tokyo Storm'), findsOneWidget);
+      for (final label in ['Tokyo Night', 'Tokyo Day', 'Tokyo Storm']) {
+        expect(
+          find.bySemanticsLabel(RegExp(RegExp.escape('$label 配色色板'))),
+          findsOneWidget,
+        );
+      }
+      semantics.dispose();
+    });
+
+    testWidgets('键盘可操作设置页返回、Combo Row 和全局字体入口', (tester) async {
+      await pumpApp(tester);
+
+      await tester.tap(find.byTooltip('设置'));
+      await tester.pumpAndSettle();
+
+      final backButton = find.byKey(const ValueKey('header_back_button'));
+      await _focusWithTab(tester, backButton);
+      expect(
+        FocusManager.instance.highlightMode,
+        FocusHighlightMode.traditional,
+      );
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pumpAndSettle();
+      expect(find.text('书库'), findsOneWidget);
+
+      await tester.tap(find.byTooltip('设置'));
+      await tester.pumpAndSettle();
+
+      final comboRow = find.byKey(const ValueKey('theme_combo_row'));
+      await _focusWithTab(tester, comboRow);
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pumpAndSettle();
+      expect(find.text('Tokyo Day'), findsOneWidget);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pumpAndSettle();
+      expect(find.text('当前主题变体：Tokyo Day'), findsOneWidget);
+
+      final fontEntry = find.byKey(const ValueKey('global_font_setting'));
+      await _focusWithTab(tester, fontEntry);
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const ValueKey('font_source_system_default')),
+        findsOneWidget,
+      );
     });
 
     for (final viewportSize in [const Size(800, 600), const Size(360, 640)]) {
@@ -276,28 +372,28 @@ void main() {
 
       await tester.tap(find.byTooltip('设置'));
       await tester.pumpAndSettle();
-      await selectTheme(tester, 'Tokyo 日');
+      await selectTheme(tester, 'Tokyo Day');
 
       expect(find.text('设置'), findsOneWidget);
-      expect(find.text('Tokyo 日'), findsOneWidget);
+      expect(find.text('Tokyo Day'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('选择 Tokyo 日立即切换为浅色主题', (tester) async {
+    testWidgets('选择 Tokyo Day 立即切换为浅色主题', (tester) async {
       await pumpApp(tester);
 
       await tester.tap(find.byTooltip('设置'));
       await tester.pumpAndSettle();
-      await selectTheme(tester, 'Tokyo 日');
+      await selectTheme(tester, 'Tokyo Day');
 
       final combo = tester.widget<PopupMenuButton<ThemeVariant>>(
         find.byType(PopupMenuButton<ThemeVariant>),
       );
       expect(combo.initialValue, ThemeVariant.tokyoDay);
 
-      final settingsContext = tester.element(find.text('Tokyo 日'));
+      final settingsContext = tester.element(find.text('Tokyo Day'));
       expect(
-        Theme.of(settingsContext).extension<TokyoPalette>()!.bg,
+        Theme.of(settingsContext).extension<TokyoPalette>()!.window,
         const Color(0xFFE1E2E7),
       );
       expect(
@@ -310,17 +406,17 @@ void main() {
 
       final libraryContext = tester.element(find.text('书库'));
       expect(
-        Theme.of(libraryContext).extension<TokyoPalette>()!.bg,
+        Theme.of(libraryContext).extension<TokyoPalette>()!.window,
         const Color(0xFFE1E2E7),
       );
     });
 
-    testWidgets('选择 Tokyo 风暴应用深蓝灰调，选择 Tokyo 夜恢复默认', (tester) async {
+    testWidgets('选择 Tokyo Storm 应用深蓝灰调，选择 Tokyo Night 恢复默认', (tester) async {
       await pumpApp(tester);
 
       await tester.tap(find.byTooltip('设置'));
       await tester.pumpAndSettle();
-      await selectTheme(tester, 'Tokyo 风暴');
+      await selectTheme(tester, 'Tokyo Storm');
 
       final combo = tester.widget<PopupMenuButton<ThemeVariant>>(
         find.byType(PopupMenuButton<ThemeVariant>),
@@ -328,12 +424,12 @@ void main() {
       expect(combo.initialValue, ThemeVariant.tokyoStorm);
       expect(
         Theme.of(
-          tester.element(find.text('Tokyo 风暴')),
-        ).extension<TokyoPalette>()!.bg,
+          tester.element(find.text('Tokyo Storm')),
+        ).extension<TokyoPalette>()!.window,
         const Color(0xFF24283B),
       );
 
-      await selectTheme(tester, 'Tokyo 夜');
+      await selectTheme(tester, 'Tokyo Night');
 
       final restoredCombo = tester.widget<PopupMenuButton<ThemeVariant>>(
         find.byType(PopupMenuButton<ThemeVariant>),
@@ -341,8 +437,24 @@ void main() {
       expect(restoredCombo.initialValue, ThemeVariant.tokyoNight);
       expect(
         Theme.of(
-          tester.element(find.text('Tokyo 夜')),
-        ).extension<TokyoPalette>()!.bg,
+          tester.element(find.text('Tokyo Night')),
+        ).extension<TokyoPalette>()!.window,
+        const Color(0xFF1A1B26),
+      );
+
+      await tester.pumpWidget(const SizedBox());
+      await pumpApp(tester);
+      await tester.tap(find.byTooltip('设置'));
+      await tester.pumpAndSettle();
+
+      final persistedCombo = tester.widget<PopupMenuButton<ThemeVariant>>(
+        find.byType(PopupMenuButton<ThemeVariant>),
+      );
+      expect(persistedCombo.initialValue, ThemeVariant.tokyoNight);
+      expect(
+        Theme.of(
+          tester.element(find.text('Tokyo Night')),
+        ).extension<TokyoPalette>()!.window,
         const Color(0xFF1A1B26),
       );
     });
@@ -352,7 +464,7 @@ void main() {
 
       await tester.tap(find.byTooltip('设置'));
       await tester.pumpAndSettle();
-      await selectTheme(tester, 'Tokyo 日');
+      await selectTheme(tester, 'Tokyo Day');
 
       await tester.pumpWidget(const SizedBox());
       await pumpApp(tester);
@@ -366,18 +478,18 @@ void main() {
       expect(combo.initialValue, ThemeVariant.tokyoDay);
       expect(
         Theme.of(
-          tester.element(find.text('Tokyo 日')),
-        ).extension<TokyoPalette>()!.bg,
+          tester.element(find.text('Tokyo Day')),
+        ).extension<TokyoPalette>()!.window,
         const Color(0xFFE1E2E7),
       );
     });
 
-    testWidgets('重建应用后保持 Tokyo 风暴选择', (tester) async {
+    testWidgets('重建应用后保持 Tokyo Storm 选择', (tester) async {
       await pumpApp(tester);
 
       await tester.tap(find.byTooltip('设置'));
       await tester.pumpAndSettle();
-      await selectTheme(tester, 'Tokyo 风暴');
+      await selectTheme(tester, 'Tokyo Storm');
 
       await tester.pumpWidget(const SizedBox());
       await pumpApp(tester);
@@ -391,8 +503,8 @@ void main() {
       expect(combo.initialValue, ThemeVariant.tokyoStorm);
       expect(
         Theme.of(
-          tester.element(find.text('Tokyo 风暴')),
-        ).extension<TokyoPalette>()!.bg,
+          tester.element(find.text('Tokyo Storm')),
+        ).extension<TokyoPalette>()!.window,
         const Color(0xFF24283B),
       );
     });

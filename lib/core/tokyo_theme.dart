@@ -11,12 +11,16 @@ import 'tokyo_storm.dart';
 
 /// 可选的主题变体。
 enum ThemeVariant {
-  tokyoNight(storageId: 'tokyo_night', label: 'Tokyo 夜', description: '默认深色主题'),
-  tokyoDay(storageId: 'tokyo_day', label: 'Tokyo 日', description: '明亮浅色主题'),
+  tokyoNight(
+    storageId: 'tokyo_night',
+    label: 'Tokyo Night',
+    description: '默认深色主题变体',
+  ),
+  tokyoDay(storageId: 'tokyo_day', label: 'Tokyo Day', description: '明亮浅色主题变体'),
   tokyoStorm(
     storageId: 'tokyo_storm',
-    label: 'Tokyo 风暴',
-    description: '深蓝灰调主题',
+    label: 'Tokyo Storm',
+    description: '深蓝灰调主题变体',
   );
 
   const ThemeVariant({
