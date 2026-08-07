@@ -168,7 +168,7 @@ class _BookList extends StatelessWidget {
       ),
       trailing: PopupMenuButton<String>(
         key: ValueKey('delete_${book.id}'),
-        tooltip: '更多操作',
+        tooltip: '《${book.title}》的更多操作',
         icon: const Icon(Icons.more_vert),
         popUpAnimationStyle: appAnimationStyle(context),
         onSelected: (value) {
@@ -178,12 +178,16 @@ class _BookList extends StatelessWidget {
           PopupMenuItem<String>(
             value: 'delete',
             key: ValueKey('delete_menu_${book.id}'),
-            child: Row(
-              children: [
-                Icon(Icons.delete_outline, color: palette.destructive),
-                const SizedBox(width: 8),
-                const Text('删除'),
-              ],
+            child: Semantics(
+              label: '删除书籍《${book.title}》',
+              excludeSemantics: true,
+              child: Row(
+                children: [
+                  Icon(Icons.delete_outline, color: palette.destructive),
+                  const SizedBox(width: 8),
+                  Text('删除', style: TextStyle(color: palette.destructive)),
+                ],
+              ),
             ),
           ),
         ],

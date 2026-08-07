@@ -11,6 +11,7 @@ import 'package:tokyo_reader/pages/library_page.dart';
 import 'package:tokyo_reader/providers/library_provider.dart';
 import 'package:tokyo_reader/services/directory_library_storage.dart';
 import 'package:tokyo_reader/services/file_import_service.dart';
+import 'package:tokyo_reader/services/library_storage.dart';
 import 'package:tokyo_reader/services/memory_library_storage.dart';
 
 class _FakeTxtFilePicker implements TxtFilePicker {
@@ -41,6 +42,28 @@ Widget _wrap(LibraryProvider provider) {
       home: const LibraryPage(),
     ),
   );
+}
+
+Future<LibraryProvider> _pumpLibraryWithBook(
+  WidgetTester tester, {
+  required String title,
+  LibraryStorage? storage,
+}) async {
+  final bookStorage = storage ?? MemoryLibraryStorage();
+  final provider = LibraryProvider(storage: bookStorage);
+  await tester.runAsync(() async {
+    await bookStorage.writeBook(
+      BookMetadata(
+        id: 'book-1',
+        title: title,
+        importedAt: DateTime(2026, 8, 5),
+      ),
+      BookContent(text: '正文'),
+    );
+    await provider.init();
+  });
+  await tester.pumpWidget(_wrap(provider));
+  return provider;
 }
 
 void main() {
@@ -179,21 +202,125 @@ void main() {
       expect(find.textContaining('外部修改'), findsOneWidget);
     });
 
-    testWidgets('书籍菜单删除先确认，Enter 和 Esc 都不会误删书籍', (tester) async {
-      final storage = MemoryLibraryStorage();
-      final provider = LibraryProvider(storage: storage);
-      await tester.runAsync(() async {
-        await storage.writeBook(
-          BookMetadata(
-            id: 'book-1',
-            title: '待删除之书',
-            importedAt: DateTime(2026, 8, 5),
-          ),
-          BookContent(text: '正文'),
+    testWidgets('键盘可以打开、导航和关闭书籍菜单', (tester) async {
+      final provider = await _pumpLibraryWithBook(tester, title: '键盘操作之书');
+
+      expect(find.byTooltip('《键盘操作之书》的更多操作'), findsOneWidget);
+
+      for (var index = 0; index < 4; index++) {
+        await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      }
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pumpAndSettle();
+
+      expect(find.text('删除'), findsOneWidget);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+
+      expect(find.text('删除'), findsNothing);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pumpAndSettle();
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pumpAndSettle();
+
+      expect(find.text('删除书籍'), findsOneWidget);
+      expect(provider.bookById('book-1'), isNotNull);
+    });
+
+    testWidgets('删除项以文字、图标和目标书名表达破坏性语义', (tester) async {
+      final semantics = tester.ensureSemantics();
+      await _pumpLibraryWithBook(tester, title: '危险操作之书');
+
+      await tester.tap(find.byTooltip('《危险操作之书》的更多操作'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('删除'), findsOneWidget);
+      expect(find.byIcon(Icons.delete_outline), findsOneWidget);
+      expect(find.bySemanticsLabel('删除书籍《危险操作之书》'), findsOneWidget);
+      semantics.dispose();
+    });
+
+    testWidgets('点击取消关闭对话框并保留书籍', (tester) async {
+      final provider = await _pumpLibraryWithBook(tester, title: '取消删除之书');
+
+      await tester.tap(find.byTooltip('《取消删除之书》的更多操作'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('删除'));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('《取消删除之书》'), findsOneWidget);
+      final cancelButton = tester.widget<TextButton>(
+        find.widgetWithText(TextButton, '取消'),
+      );
+      expect(cancelButton.autofocus, isTrue);
+
+      await tester.tap(find.widgetWithText(TextButton, '取消'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('删除书籍'), findsNothing);
+      expect(find.text('取消删除之书'), findsOneWidget);
+      expect(provider.bookById('book-1'), isNotNull);
+    });
+
+    testWidgets('明确确认后删除书籍', (tester) async {
+      final provider = await _pumpLibraryWithBook(tester, title: '确认删除之书');
+
+      await tester.tap(find.byTooltip('《确认删除之书》的更多操作'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('删除'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(TextButton, '删除'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('确认删除之书'), findsNothing);
+      expect(find.text('书库还是空的'), findsOneWidget);
+      expect(provider.bookById('book-1'), isNull);
+    });
+
+    for (final viewportSize in [const Size(960, 720), const Size(360, 640)]) {
+      testWidgets('${viewportSize.width.toInt()}px 下菜单和删除对话框完整可用', (
+        tester,
+      ) async {
+        tester.view.physicalSize = viewportSize;
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        await _pumpLibraryWithBook(tester, title: '一本需要谨慎删除的长书名');
+
+        await tester.tap(find.byTooltip('《一本需要谨慎删除的长书名》的更多操作'));
+        await tester.pumpAndSettle();
+
+        final menuItem = find.text('删除');
+        _expectInsideViewport(tester, menuItem, viewportSize);
+
+        await tester.tap(menuItem);
+        await tester.pumpAndSettle();
+
+        _expectInsideViewport(tester, find.text('删除书籍'), viewportSize);
+        _expectInsideViewport(
+          tester,
+          find.textContaining('《一本需要谨慎删除的长书名》'),
+          viewportSize,
         );
-        await provider.init();
+        _expectInsideViewport(
+          tester,
+          find.widgetWithText(TextButton, '取消'),
+          viewportSize,
+        );
+        _expectInsideViewport(
+          tester,
+          find.widgetWithText(TextButton, '删除'),
+          viewportSize,
+        );
+        expect(tester.takeException(), isNull);
       });
-      await tester.pumpWidget(_wrap(provider));
+    }
+
+    testWidgets('书籍菜单删除先确认，Enter 和 Esc 都不会误删书籍', (tester) async {
+      final provider = await _pumpLibraryWithBook(tester, title: '待删除之书');
 
       await tester.tap(find.byKey(const ValueKey('delete_book-1')));
       await tester.pumpAndSettle();
@@ -228,19 +355,7 @@ void main() {
 
     testWidgets('删除失败时保留书籍并显示错误 Toast', (tester) async {
       final storage = _DeleteFailingStorage();
-      final provider = LibraryProvider(storage: storage);
-      await tester.runAsync(() async {
-        await storage.writeBook(
-          BookMetadata(
-            id: 'book-1',
-            title: '待删除之书',
-            importedAt: DateTime(2026, 8, 5),
-          ),
-          BookContent(text: '正文'),
-        );
-        await provider.init();
-      });
-      await tester.pumpWidget(_wrap(provider));
+      await _pumpLibraryWithBook(tester, title: '待删除之书', storage: storage);
 
       await tester.tap(find.byKey(const ValueKey('delete_book-1')));
       await tester.pumpAndSettle();
@@ -255,4 +370,16 @@ void main() {
       expect(find.textContaining('磁盘不可写'), findsOneWidget);
     });
   });
+}
+
+void _expectInsideViewport(
+  WidgetTester tester,
+  Finder finder,
+  Size viewportSize,
+) {
+  final rect = tester.getRect(finder);
+  expect(rect.left, greaterThanOrEqualTo(0));
+  expect(rect.top, greaterThanOrEqualTo(0));
+  expect(rect.right, lessThanOrEqualTo(viewportSize.width));
+  expect(rect.bottom, lessThanOrEqualTo(viewportSize.height));
 }
